@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex">
+<title>棒読みちゃんHTML連携テスト</title>
+
+<!-- 補足：棒読みちゃんとの通信にはJSONPを利用します。jQueryのajaxを使うと楽です。 -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+
+//棒読みちゃんに文字列を読み上げさせる関数
+function bouyomiTalk(text, voice, volume, speed, tone) {
+  return $.ajax({
+    url     : 'http://localhost:50080/Talk',
+    dataType: 'jsonp',
+    data    : {
+      text  : text,
+      voice : voice,
+      volume: volume,
+      speed : speed,
+      tone  : tone
+    }
+  });
+}
+
+//棒読みちゃんの声質一覧を取得する関数
+function bouyomiGetVoiceList() {
+  return $.ajax({
+    url     : 'http://localhost:50080/GetVoiceList',
+    dataType: 'jsonp'
+  });
+}
+
+//棒読みちゃん関連の準備(GUI処理とイベント処理)
+function initBouyomiChan(){
+  //声質の一覧を取得してドロップダウンリストを生成
+  bouyomiGetVoiceList().done(function(e){
+    //取得成功
+    let voiceList = e.voiceList;
+    for(let i = 0; i < voiceList.length; i++){
+       let voice = voiceList[i];
+       let html = $('<option>', {
+         value : voice.id, 
+         text  : voice.alias || voice.name,
+         style : 'color:' + (voice.kind.includes('AquesTalk') ? '#080' : voice.kind.includes('SAPI5') ? '#00f' : '#f0f')
+       });
+       $('#SendVoice').append(html);
+    }
+  }).fail(function(e){
+    //取得失敗
+    logError('棒読みちゃんに接続できませんでした(' + e.status + ')');
+  });
+  
+  //読み上げボタンクリック時の処理
+  $('#SendButton').click(function(){
+    let text   = $('#SendText').val();
+    let voice  = $('#SendVoice').val();
+    let volume = $('#SendVolume').val();
+    let speed  = $('#SendSpeed').val();
+    let tone   = $('#SendTone').val();
+    bouyomiTalk(text, voice, volume, speed, tone).done(function(e){
+      //送信成功
+      logInfo(text);  //logInfo(e.taskId + ':' + text);
+    }).fail(function(){
+      //送信失敗
+      logError('送信失敗：' + text);
+    });
+    $('#Readme').hide();
+  });
+  
+  //読み上げ対象文字列クリック時の処理
+  $('.Talk').click(function(){
+    bouyomiTalk($(this).text());
+  });
+  
+  //入力数値の範囲チェック処理
+  $('.NumberInput').each(function(){
+    let t = $(this);
+    t.val(t.attr('def'));
+  }).blur(function(){
+    let t = $(this);
+    let def = parseInt(t.attr('def'));
+    let max = parseInt(t.attr('max'));
+    let min = parseInt(t.attr('min'));
+    let now = parseInt(t.val());
+    if(now != def){
+      if(now == def) t.val(def);
+      if(now < min)  t.val(min);
+      if(now > max)  t.val(max);
+      if(isNaN(now)) t.val(def);
+    }
+  }).keydown(function(e){
+    let t = $(this);
+    let c = e.keyCode;
+    let max = parseInt(t.attr('max'));
+    let min = parseInt(t.attr('min'));
+    let now = parseInt(t.val());
+    if(c==38 && now++ < max) t.val(now);  //Upで増加
+    if(c==40 && now-- > min) t.val(now);  //Downで減少
+  });
+}
+
+//音声認識関連の準備(GUI処理とイベント処理とブラウザの対応確認)
+function initSpeechRecognition(){
+  let run = false;
+  let rec = null;
+  
+  //ブラウザが音声認識APIを持っているか確認
+  if(typeof(SpeechRecognition) != 'undefined'){
+    rec = new SpeechRecognition();
+  } else if(typeof(webkitSpeechRecognition) != 'undefined'){
+    rec = new webkitSpeechRecognition();
+  }
+  
+  if(rec == null){
+    logError('このブラウザはSpeechRecognitionに対応していません。音声認識機能は利用できません。');
+    $('#RecButton').prop('disabled', true).html('音声認識非対応');
+  } else {
+    rec.lang            = 'ja-JP';
+    rec.interimResults  = true;
+    rec.continuous      = true;
+    rec.maxAlternatives = 1;    //1以上指定してもChromeは返してくれないっぽい
+  //rec.serviceURI      = 'xxx' //なにこれ？
+    
+    rec.onresult = function(e){
+      let current    = e.results[e.resultIndex];
+      let transcript = current[0].transcript;
+      let confidence = ('0' + (current[0].confidence * 100).toFixed()).slice(-2);
+      let text       = '<tt>[' + confidence + '%]</tt> ' + transcript;
+      if (current.isFinal) {
+        //認識結果
+        bouyomiTalk(transcript);
+        logInfo(text);
+        $('#Interim').html('');
+      } else {
+        //途中経過
+        $('#Interim').html(text)[0].scrollIntoView();
+      }
+    }
+    
+    rec.onerror = function(e){
+      logError('Error : ' + e.error + ' ' + e.message);
+    }
+    
+    rec.onnomatch = function(){
+      logError('NoMatch');
+    }
+    
+    rec.onstart = function(){
+      run = true;
+      $('#RecIndicate').show();
+      $('#RecButton').html('音声認識を終了する');
+    }
+    
+    rec.onend = function(){
+      run = false;
+      $('#RecIndicate').hide();
+      $('#RecButton').html('音声認識を開始する');
+    }
+    
+    //音声認識ボタンクリック時の処理
+    $('#RecButton').click(function(){
+      if(run) {
+        rec.stop();
+      } else {
+        rec.start();
+      }
+      $('#Readme').hide();
+    });
+  }
+}
+
+//ログを表示する関数
+function log(html, style) {
+  let elm = $('<div>', {
+    html  : html,
+    style : style
+  });
+  $('#Log').append(elm);
+}
+function logInfo(html) {
+  log(html, 'color:#555');
+}
+function logError(html) {
+  log(html, 'color:#f55');
+}
+
+
+//HTML読み込み完了後の処理
+$(function(){
+  //音声認識関連の準備
+  initSpeechRecognition();
+  
+  //棒読みちゃん関連の準備
+  initBouyomiChan();
+  
+  //挨拶を読み上げ
+  bouyomiTalk('ゆっくりしていってね！', 1, -1, 60, 100);
+});
+</script>
+
+<style>
+body{
+  margin: 0;
+}
+h2{
+  margin-bottom: 0px;
+}
+ul{
+  margin-top: 0px;
+}
+.HeaderShift{
+  height: 115px;
+}
+.Header{
+  height: 110px;
+  width: 100%;
+  top: 0px;
+  padding: 5px;
+  position: fixed;
+  background: #eef;
+}
+.Content{
+  margin: 5px;
+}
+.Talk{
+  color: magenta;
+  cursor: pointer;
+}
+.NumberInput{
+  width: 40px;
+  text-align: right;
+}
+#SendVoice{
+  width: 220px;
+}
+#SendText{
+  width: 475px;
+  height: 50px;
+  resize: none;
+  vertical-align: middle;
+}
+#RecIndicate{
+  background-color: red;
+  display: none;
+}
+#Interim{
+  color:#00f;
+}
+</style>
+</head>
+
+<body>
+<div class="HeaderShift"></div>
+<div class="Header">
+  <div>
+    声質 <select id="SendVoice" size=1><option value=0>デフォルト</option></select>
+    音量 <input  id="SendVolume" class="NumberInput" type="text" def="-1" min="0"  max="100" />
+    速度 <input  id="SendSpeed"  class="NumberInput" type="text" def="-1" min="50" max="300" />
+    音程 <input  id="SendTone"   class="NumberInput" type="text" def="-1" min="50" max="300" />
+  </div>
+  <div>
+    文章 <textarea id="SendText" placeholder="ここに書いた文章を読み上げます"></textarea>
+  </div>
+  <div">　　
+    <button id="SendButton" >文章を読み上げる</button>　
+    <button id="RecButton"  >音声認識を開始する</button>　
+    <span   id="RecIndicate">音声認識中</span>　
+  </div>
+</div>
+
+<div class="Content">
+  <div id="Log"></div>
+  <div id="Interim"></div>
+  <div id="Readme">
+    <h2>概要</h2>
+    <ul>
+      <li>ブラウザ上で入力した文章を<span class="Talk">棒読みちゃん</span>が読み上げます。</li>
+      <li>ブラウザの<span class="Talk">Web Speech API</span>を利用して音声認識した文章を棒読みちゃんが読み上げます。</li>
+    </ul>
+    <h2>動作環境</h2>
+    <ul>
+      <li>棒読みちゃん
+        <ul>
+          <li><span class="Talk">Ver0.1.11.0 Beta12</span>以降</li>
+          <li>HTTPサーバ機能(Port:50080)を<span class="Talk">セキュリティ対策ソフトでブロックしていない事</span></li>
+        </ul>
+      </li>
+      <li>音声認識を利用する場合
+        <ul>
+          <li>Web Speech APIに対応したブラウザ(<span class="Talk">Google Chrome</span>など)</li>
+          <li><span class="Talk">マイク</span>などの音声入力デバイス</li>
+        </ul>
+      </li>
+    </ul>
+    <h2>使用方法</h2>
+    <ul>
+      <li>Windows上で棒読みちゃんを立ち上げてください。</li>
+      <li>上部にある「文章」欄を入力し、「読み上げ」ボタンを押すと読み上げます。</li>
+      <li>上部にある「音声認識を開始する」ボタンを押し、マイクの使用を許可すれば音声認識が始まります。</li>
+    </ul>
+    <h2>注意事項</h2>
+    <ul>
+      <li>Chromeでの音声認識はGoogleのサーバ側で処理しているようです。ずっと使える保証は無い事やプライバシーなどご留意ください。</li>
+    </ul>
+    <h2>Special Thanks</h2>
+    <ul>
+      <li>音声認識はWangdoraさんの<a href="https://ch.nicovideo.jp/Wangdora/blomaga/ar1783235">音声認識プラグイン</a>を参考にしました。車載配信等で使う場合はそちらのほうがが便利です。</li>
+    </ul>
+  </div>
+</div>
+</body>
+
+</html>
