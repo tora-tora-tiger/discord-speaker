@@ -1,6 +1,7 @@
 import { Client, Events, GatewayIntentBits, Collection } from 'discord.js';
-import { token } from '../config.json';
+import { token } from '../../config.json';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import fs from 'fs';
 
 const client = new Client({
@@ -26,8 +27,8 @@ for (const folder of commandFolders) {
     const filePath = path.join(commandsPath, file);
     (async () => {
       console.log("koko", filePath);
-      // const command = await import(filePath);
-      const command = require(filePath);
+      const command = await import(pathToFileURL(filePath).href);
+      // const command = require(filePath);
       console.log("import");
 
       if (command.data && command.execute) {
@@ -49,6 +50,7 @@ client.once(Events.ClientReady, (readyClient) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   const command = interaction.client.commands.get(interaction.commandName);
+
   if (!command) {
     console.error(
       `No command matching ${interaction.commandName} was found.`,
@@ -60,6 +62,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
   } catch (error) {
     console.error(`Error executing ${interaction.commandName}`);
     console.error(error);
+
+    if(interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+    } else {
+      await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+    }
   }
 });
 

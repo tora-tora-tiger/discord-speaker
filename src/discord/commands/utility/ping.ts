@@ -8,7 +8,7 @@ export async function execute(interaction: CommandInteraction) {
   await interaction.reply('Pong!');
 }
 
-module.exports = { 
+export default { 
   data: data,
   execute: execute
 };

@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx src/index.ts",
-    "dev-discord": "tsx src/discord.ts",
+    "dev-discord": "tsx src/discord/index.ts",
     "dev-request": "tsx src/request.ts"
   },
   "keywords": [],
