@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "dev-discord": "tsx src/discord/index.ts",
+    "dev-discord-deploy": "tsx src/discord/deploy.ts",
     "dev-request": "tsx src/request.ts"
   },
   "keywords": [],

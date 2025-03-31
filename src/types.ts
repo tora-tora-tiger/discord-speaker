@@ -6,6 +6,7 @@ declare module "discord.js" {
 			string,
 			{
 				execute: (interaction: CommandInteraction) => Promise<void>
+				data: SlashCommandBuilder
 			}
 		>;
 	}
