@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
+import type { Command } from '../types';
+import { SlashCommandBuilder } from 'discord.js';
 
 /* ディレクトリ配下の特定の拡張子のファイルを取得し，callbackを実行
  * @param directory - ディレクトリの名前
@@ -28,8 +30,8 @@ async function collectFiles (
 }
 
 // commands/utility の中身をJSONの配列にして返す
-async function collectCommands(): Promise<JSON[]> {
-  const commands: JSON[] = [];
+async function collectCommands(): Promise<Command[]> {
+  const commands: Command[] = [];
 
   await collectFiles(
     "commands/utility",
@@ -37,7 +39,7 @@ async function collectCommands(): Promise<JSON[]> {
     async (filePath) => {
       const command = (await import(pathToFileURL(filePath).href)).default;
       if (command.data && command.execute) {
-        commands.push(command.data.toJSON());
+        commands.push(command);
         console.log("set command: ", command.data.toJSON());
       } else {
         console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);

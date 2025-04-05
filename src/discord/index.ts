@@ -1,9 +1,7 @@
 import { Client, Events, GatewayIntentBits, Collection, Interaction } from 'discord.js';
 import { token } from '../../config.json';
-// import path from 'path';
-import { pathToFileURL } from 'url';
-// import fs from 'fs';
-import collectFiles from './collectFiles';
+import { collectCommands } from './collectFiles';
+import type { Command } from '../types';
 
 
 (async () => {
@@ -12,25 +10,15 @@ import collectFiles from './collectFiles';
     intents: [GatewayIntentBits.Guilds]
   });
   
-  // スラッシュコマンドの登録
+  // スラッシュコマンドのmap
   client.commands = new Collection();
   
-  await collectFiles(
-    "commands",
-    ".ts",
-    async (filePath) => {
-      const command = (await import(pathToFileURL(filePath).href)).default;
+  (await collectCommands()).forEach(value => {
+    console.log(value);
+    client.commands.set(value.data.name, value);
+  });
   
-      if (command.data && command.execute) {
-        console.log("set command: ", command.data.name);
-        client.commands.set(command.data.name, command);
-      } else {
-        console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-      }
-    }
-  )
-  
-  client.once(Events.ClientReady, (readyClient) => {
+  client.once(Events.ClientReady, (readyClient: Client<true>) => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
   });
   
@@ -38,7 +26,6 @@ import collectFiles from './collectFiles';
     if (!interaction.isChatInputCommand()) return;
     console.log(client.commands.keys());
     const command = interaction.client.commands.get(interaction.commandName)
-    console.log(command);
   
     console.log("interaction: ", interaction.commandName);
     console.log("command: ", command);

@@ -4,7 +4,7 @@ import { collectCommands } from './collectFiles';
 
 
 export default async function deploy(): Promise<void> {
-  const commands: JSON[] = await collectCommands();
+  const commands = await collectCommands();
   // Grab all the command folders from the commands directory you created earlier
   // const foldersPath = path.join(__dirname, 'commands');
   // const commandFolders = fs.readdirSync(foldersPath);
@@ -21,7 +21,7 @@ export default async function deploy(): Promise<void> {
 		// The put method is used to fully refresh all commands in the guild with the current set
 		const data = await rest.put(
 			Routes.applicationCommands(clientId),
-			{ body: commands },
+			{ body: commands.map(command => command.data) },
 		) as { length: number; };
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
