@@ -1,7 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 
-export default async function collectFiles (
+/* ディレクトリ配下の特定の拡張子のファイルを取得し，callbackを実行
+ * @param directory - ディレクトリの名前
+ * @param fileType - ファイルの拡張子
+ * @param callback - コールバック関数
+ * @returns {Promise<void>}
+ */
+async function collectFiles (
   directory: string,
   fileType: string,
   callback: (filePath: string) => Promise<void>,
@@ -19,3 +26,26 @@ export default async function collectFiles (
     await callback(filePath);
   }
 }
+
+// commands/utility の中身をJSONの配列にして返す
+async function collectCommands(): Promise<JSON[]> {
+  const commands: JSON[] = [];
+
+  await collectFiles(
+    "commands/utility",
+    ".ts",
+    async (filePath) => {
+      const command = (await import(pathToFileURL(filePath).href)).default;
+      if (command.data && command.execute) {
+        commands.push(command.data.toJSON());
+        console.log("set command: ", command.data.toJSON());
+      } else {
+        console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+      }
+    }
+  );
+  return commands;
+}
+
+export default collectFiles;
+export { collectCommands };
