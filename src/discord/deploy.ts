@@ -1,6 +1,6 @@
 import { REST, Routes } from 'discord.js';
 import { clientId, token } from 'config.json';
-import { collectCommands } from './collectFiles';
+import { collectCommands } from '@/discord/collectFiles';
 
 
 export default async function deploy(): Promise<void> {

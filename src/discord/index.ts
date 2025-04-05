@@ -1,7 +1,7 @@
 import { Client, Events, GatewayIntentBits, Collection, Interaction } from 'discord.js';
 import { token } from 'config.json';
-import { collectCommands } from './collectFiles';
-import type { Command } from '../types';
+import { collectCommands } from '@/discord/collectFiles';
+import type { Command } from '@/types';
 
 
 (async () => {

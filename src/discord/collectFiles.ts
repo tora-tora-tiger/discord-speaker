@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import type { Command } from '../types';
+import type { Command } from '@/types';
 import { SlashCommandBuilder } from 'discord.js';
 
 /* ディレクトリ配下の特定の拡張子のファイルを取得し，callbackを実行
