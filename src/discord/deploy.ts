@@ -1,5 +1,5 @@
 import { REST, Routes } from 'discord.js';
-import { clientId, token } from '../../config.json';
+import { clientId, token } from 'config.json';
 import { collectCommands } from './collectFiles';
 
 

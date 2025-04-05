@@ -1,5 +1,5 @@
 import { Client, Events, GatewayIntentBits, Collection, Interaction } from 'discord.js';
-import { token } from '../../config.json';
+import { token } from 'config.json';
 import { collectCommands } from './collectFiles';
 import type { Command } from '../types';
 
