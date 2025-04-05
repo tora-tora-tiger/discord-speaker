@@ -1,29 +1,19 @@
 import { REST, Routes } from 'discord.js';
 import { clientId, token } from '../../config.json';
-import fs from 'fs';
-import path from 'path';
+import collectFiles from './collectFiles';
 import { pathToFileURL } from 'node:url';
 
 const commands: JSON[] = [];
 // Grab all the command folders from the commands directory you created earlier
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+// const foldersPath = path.join(__dirname, 'commands');
+// const commandFolders = fs.readdirSync(foldersPath);
 
 (async () => {
-  for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder);
-    console.log(`Loading commands from ${commandsPath}`);
-    const commandFiles = fs
-      .readdirSync(commandsPath)
-      .filter((file) => file.endsWith(".ts"));
-    
-    console.log(commandFiles);
-      
-    for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
-      
-      const command = await import(pathToFileURL(filePath).href);
-
+  await collectFiles(
+    "commands",
+    ".ts",
+    async (filePath) => {
+      const command = (await import(pathToFileURL(filePath).href)).default;
       if (command.data && command.execute) {
         commands.push(command.data.toJSON());
         console.log("set command: ", command.data.toJSON());
@@ -32,9 +22,8 @@ const commandFolders = fs.readdirSync(foldersPath);
           `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
         );
       }
-      
     }
-  }
+  );
 
   console.log("commands: ", commands);
 
@@ -46,10 +35,10 @@ const commandFolders = fs.readdirSync(foldersPath);
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
 		// The put method is used to fully refresh all commands in the guild with the current set
-		const data: unknown = await rest.put(
+		const data = await rest.put(
 			Routes.applicationCommands(clientId),
 			{ body: commands },
-		);
+		) as { length: number; };
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {

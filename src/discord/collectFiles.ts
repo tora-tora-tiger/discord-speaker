@@ -4,7 +4,7 @@ import path from 'path';
 export default async function collectFiles (
   directory: string,
   fileType: string,
-  callback: (filePath: string) => Promise<void> | void,
+  callback: (filePath: string) => Promise<void>,
 ): Promise<void> {
 
   const folderPath = path.join(__dirname, directory);
