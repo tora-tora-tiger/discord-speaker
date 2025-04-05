@@ -1,29 +1,13 @@
 import { REST, Routes } from 'discord.js';
 import { clientId, token } from '../../config.json';
-import collectFiles from './collectFiles';
-import { pathToFileURL } from 'node:url';
+import { collectCommands } from './collectFiles';
 
-const commands: JSON[] = [];
-// Grab all the command folders from the commands directory you created earlier
-// const foldersPath = path.join(__dirname, 'commands');
-// const commandFolders = fs.readdirSync(foldersPath);
 
-(async () => {
-  await collectFiles(
-    "commands",
-    ".ts",
-    async (filePath) => {
-      const command = (await import(pathToFileURL(filePath).href)).default;
-      if (command.data && command.execute) {
-        commands.push(command.data.toJSON());
-        console.log("set command: ", command.data.toJSON());
-      } else {
-        console.log(
-          `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
-        );
-      }
-    }
-  );
+export default async function deploy(): Promise<void> {
+  const commands: JSON[] = await collectCommands();
+  // Grab all the command folders from the commands directory you created earlier
+  // const foldersPath = path.join(__dirname, 'commands');
+  // const commandFolders = fs.readdirSync(foldersPath);
 
   console.log("commands: ", commands);
 
@@ -45,4 +29,6 @@ const commands: JSON[] = [];
 		// And of course, make sure you catch and log any errors!
 		console.error(error);
 	}
-})();
+};
+
+deploy();
