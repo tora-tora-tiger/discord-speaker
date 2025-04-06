@@ -24,11 +24,7 @@ import type { Command } from '@/types';
   
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     if (!interaction.isChatInputCommand()) return;
-    console.log(client.commands.keys());
     const command = interaction.client.commands.get(interaction.commandName)
-  
-    console.log("interaction: ", interaction.commandName);
-    console.log("command: ", command);
   
     if (!command) {
       console.error(
@@ -37,7 +33,7 @@ import type { Command } from '@/types';
       return;
     }
     try {
-      await command.execute(interaction);
+      command.execute(interaction);
       console.log("executed command: ", interaction.commandName);
     } catch (error) {
       console.error(`Error executing ${interaction.commandName}`);
