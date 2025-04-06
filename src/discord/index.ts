@@ -5,7 +5,6 @@ import type { Command } from '@/types';
 
 
 (async () => {
-
   const client = new Client({
     intents: [GatewayIntentBits.Guilds]
   });
@@ -13,9 +12,9 @@ import type { Command } from '@/types';
   // スラッシュコマンドのmap
   client.commands = new Collection();
   
-  (await collectCommands()).forEach(value => {
-    console.log(value);
-    client.commands.set(value.data.name, value);
+  const commands = await collectCommands();
+  commands.forEach(command => {
+    client.commands.set(command.data.name, command);
   });
   
   client.once(Events.ClientReady, (readyClient: Client<true>) => {

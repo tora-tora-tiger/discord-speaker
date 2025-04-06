@@ -18,7 +18,7 @@ async function collectFiles (
 
   const folderPath = path.join(__dirname, directory);
   const files = fs.readdirSync(folderPath).filter(
-    (file) => file.endsWith(fileType),
+    (file) => file.endsWith(fileType)
   );
 
   console.log("found", files);
