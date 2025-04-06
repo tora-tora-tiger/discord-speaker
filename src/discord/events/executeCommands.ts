@@ -1,6 +1,7 @@
 import { Interaction } from "discord.js";
 
 async function executeCommands(interaction: Interaction): Promise<void>{
+  console.log(interaction);
   if (!interaction.isChatInputCommand()) return;
   const command = interaction.client.commands.get(interaction.commandName)
   
