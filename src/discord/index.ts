@@ -4,11 +4,12 @@ import { collectCommands } from '@/discord/collectFiles';
 import type { Command } from '@/types';
 import executeCommands from '@/discord/events/executeCommands';
 
+import readline from 'readline';
 
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds]
+});
 (async () => {
-  const client = new Client({
-    intents: [GatewayIntentBits.Guilds]
-  });
   
   // スラッシュコマンドのmap
   client.commands = new Collection();
@@ -26,3 +27,16 @@ import executeCommands from '@/discord/events/executeCommands';
   
   client.login(token);
 })();
+
+
+// bot終了用
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+rl.question('Press Enter to close client session...', () => {
+  rl.close();
+  client.destroy();
+  process.exit(0);
+});
