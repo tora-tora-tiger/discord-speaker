@@ -1,5 +1,6 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import {SlashCommandBuilder, CommandInteraction} from 'discord.js';
+import { monitorChannel } from '@/discord';
 
 const data = new SlashCommandBuilder()
   .setName('bye')
@@ -10,6 +11,7 @@ const execute = async function(interaction: CommandInteraction) {
   const connection = getVoiceConnection(interaction.guild.id);
   if(connection) {
     connection.destroy();
+    monitorChannel.delete(interaction.guild.id);
     await interaction.reply("Disconnected from the voice channel.");
     return;
   }
