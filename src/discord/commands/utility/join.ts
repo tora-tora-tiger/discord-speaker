@@ -10,10 +10,8 @@ async function execute(interaction: CommandInteraction) {
   if(!interaction.guild) return;
   if(interaction.user.bot) return;
   if (!(interaction.member instanceof GuildMember)) return;
-  const member = interaction.member;
+  const voiceState = interaction.member.voice;
 
-  console.log(member.voice);
-  const voiceState = member.voice
   if (!voiceState.channel || !voiceState.channelId) {
     return interaction.reply("You need to be in a voice channel to use this command.")
   }
