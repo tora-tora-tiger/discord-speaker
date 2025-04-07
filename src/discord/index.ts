@@ -16,7 +16,7 @@ const client = new Client({
   ]
 });
 
-const monitorChannel = new Map<Snowflake, Snowflake>();
+export const monitorChannel = new Map<Snowflake, Snowflake>();
 (async () => {
   
   // スラッシュコマンドのmap
@@ -36,7 +36,7 @@ const monitorChannel = new Map<Snowflake, Snowflake>();
   client.on(Events.InteractionCreate, executeCommands);
 
   // メッセージの読み上げ
-  client.on(Events.MessageCreate, async (message) => readMessages(message, monitorChannel))
+  client.on(Events.MessageCreate, readMessages)
   
   client.login(token);
 })();
