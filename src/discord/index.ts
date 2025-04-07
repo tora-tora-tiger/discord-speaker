@@ -12,6 +12,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessages,  // メッセージイベントを受け取るために必要
     GatewayIntentBits.MessageContent
   ]
 });

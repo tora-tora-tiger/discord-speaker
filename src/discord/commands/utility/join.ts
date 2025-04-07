@@ -22,9 +22,10 @@ async function execute(interaction: CommandInteraction) {
     channelId: voiceState.channelId,
     guildId: interaction.guild.id,
     adapterCreator: interaction.guild.voiceAdapterCreator,
-  })
+  });
 
-  monitorChannel.set(interaction.guild.id, voiceState.channelId)
+  monitorChannel.set(interaction.guild.id, interaction.channelId);
+  console.log("registered text channel: ", interaction.channelId);
   interaction.reply(`Joined ${voiceState.channel.name}`)
 }
 
