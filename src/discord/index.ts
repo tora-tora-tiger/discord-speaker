@@ -1,7 +1,6 @@
-import { Client, Events, GatewayIntentBits, Collection, Interaction, Snowflake } from 'discord.js';
+import { Client, Events, GatewayIntentBits, Collection, Snowflake } from 'discord.js';
 import { token } from 'config.json';
 import { collectCommands } from '@/discord/collectFiles';
-import type { Command } from '@/types';
 import executeCommands from '@/discord/events/executeCommands';
 import readMessages from '@/discord/events/readMessages';
 

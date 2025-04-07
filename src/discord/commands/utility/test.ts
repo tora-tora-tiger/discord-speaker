@@ -1,6 +1,4 @@
-import { joinVoiceChannel } from '@discordjs/voice';
-import {SlashCommandBuilder, CommandInteraction, ChannelType, Options} from 'discord.js';
-import asyncFind from '@/utility/asyncFind';
+import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
 
 const data = new SlashCommandBuilder()
   .setName('test')

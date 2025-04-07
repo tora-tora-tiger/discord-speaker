@@ -1,4 +1,4 @@
-import { Guild, GuildTextBasedChannel, Message, OmitPartialGroupDMChannel, Snowflake } from "discord.js";
+import { Message, OmitPartialGroupDMChannel } from "discord.js";
 import { monitorChannel } from "@/discord";
 
 async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
