@@ -8,7 +8,12 @@ const data = new SlashCommandBuilder()
 const execute = async function(interaction: CommandInteraction) {
   if(!interaction.guild) return;
   const connection = getVoiceConnection(interaction.guild.id);
-  connection?.destroy();
+  if(connection) {
+    connection.destroy();
+    await interaction.reply("Disconnected from the voice channel.");
+    return;
+  }
+  await interaction.reply("Not connected to any voice channel.");
 }
 
 export default { 
