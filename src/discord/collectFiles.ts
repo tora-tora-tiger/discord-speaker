@@ -40,7 +40,7 @@ async function collectCommands(): Promise<Command[]> {
       const command = (await import(pathToFileURL(filePath).href)).default;
       if (command.data && command.execute) {
         commands.push(command);
-        console.log("set command: ", command.data.toJSON());
+        // console.log("set command: ", command.data.toJSON());
       } else {
         console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
       }
