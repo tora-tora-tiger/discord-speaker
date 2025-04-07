@@ -6,7 +6,7 @@ const data = new SlashCommandBuilder()
 
 const execute = async function(interaction: CommandInteraction) {
   console.log(interaction);
-  await interaction.reply("");
+  await interaction.reply("execute show command");
 }
 
 export default { 
