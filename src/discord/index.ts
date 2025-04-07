@@ -7,7 +7,11 @@ import executeCommands from '@/discord/events/executeCommands';
 import readline from 'readline';
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildVoiceStates
+  ]
 });
 (async () => {
   
