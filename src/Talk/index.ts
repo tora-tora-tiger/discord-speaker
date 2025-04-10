@@ -90,8 +90,6 @@ export default class Talk {
       speaker: options.voice // Python版ではspeakerというパラメータ名を使用
     }).toString();
   
-    console.log(query_url.toString());
-  
     const query_response = await this.request(query_url, {method: 'POST'});
     
     if (!query_response) {
