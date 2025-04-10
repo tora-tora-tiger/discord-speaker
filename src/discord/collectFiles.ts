@@ -20,7 +20,7 @@ async function collectFiles (
     (file) => file.endsWith(fileType)
   );
 
-  console.log("found", files);
+  console.log("[discord] found", files);
 
   for (const file of files) {
     const filePath = path.join(folderPath, file);
