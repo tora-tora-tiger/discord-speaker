@@ -1,6 +1,8 @@
-import * as wav from 'node-wav';
-import Speaker from 'speaker';
-import { Readable } from 'stream';
+import { promises as fs } from 'fs';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import * as os from 'os';
+import * as path from 'path';
 
 type TalkOptions = {
   voice: string;
@@ -81,7 +83,7 @@ export default class Talk {
       speed: this.speed,
       tone: this.tone
     } 
-  ): Promise<void> {
+  ): Promise<ArrayBuffer | undefined> {
     const query_url = new URL(`http://${this.host}:${this.port}/audio_query`);
     query_url.search = new URLSearchParams({
       text: text,
@@ -124,59 +126,49 @@ export default class Talk {
     const audioData = await synthesis_response.arrayBuffer();
     
     // AudioContextを使用して音声を再生
-    await this.playAudio(audioData);
+    // await this.playAudio(audioData);
+
+    return audioData;
   }
-  
+
   private async playAudio(audioData: ArrayBuffer): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        // WAVデータをデコード
-        const decoded = wav.decode(Buffer.from(audioData));
-        
-        // Speakerのオプションを設定
-        const speakerOptions = {
-          channels: decoded.channelData.length,
-          bitDepth: 16,
-          sampleRate: decoded.sampleRate
-        };
-        
-        // Speakerインスタンスを作成
-        const speaker = new Speaker(speakerOptions);
-        
-        // 完了時のイベント
-        speaker.on('close', () => {
-          resolve();
-        });
-        
-        // エラー処理
-        speaker.on('error', (err) => {
-          reject(err);
-        });
-        
-        // PCMデータをバッファに変換
-        const bufferData = Buffer.alloc(decoded.channelData[0].length * 2 * decoded.channelData.length);
-        
-        let offset = 0;
-        // インターリーブされたPCMデータを作成
-        for (let i = 0; i < decoded.channelData[0].length; i++) {
-          for (let channel = 0; channel < decoded.channelData.length; channel++) {
-            const sample = Math.max(-1, Math.min(1, decoded.channelData[channel][i]));
-            const sampleInt = Math.floor(sample < 0 ? sample * 32768 : sample * 32767);
-            bufferData.writeInt16LE(sampleInt, offset);
-            offset += 2;
-          }
-        }
-        
-        // ストリームを作成して再生
-        const readable = new Readable();
-        readable._read = () => {};
-        readable.push(bufferData);
-        readable.push(null);
-        readable.pipe(speaker);
-        
-      } catch (err) {
-        reject(err);
+    const execPromise = promisify(exec);
+    const tempDir = os.tmpdir();
+    const tempFilePath = path.join(tempDir, `voicebox_${Date.now()}.wav`);
+    
+    try {
+      // WAVデータをファイルに保存
+      await fs.writeFile(tempFilePath, Buffer.from(audioData));
+      
+      // Macの場合はafplayを使用して再生
+      if (process.platform === 'darwin') {
+        await execPromise(`afplay "${tempFilePath}"`);
+      } 
+      // Linuxの場合はaplayを使用
+      else if (process.platform === 'linux') {
+        await execPromise(`aplay "${tempFilePath}"`);
       }
-    });
+      // Windowsの場合はstart commandを使用
+      else if (process.platform === 'win32') {
+        await execPromise(`start "" "${tempFilePath}"`);
+      }
+      else {
+        throw new Error(`Unsupported platform: ${process.platform}`);
+      }
+      
+      // 一時ファイルを削除
+      await fs.unlink(tempFilePath);
+      
+    } catch (err) {
+      console.error('Error playing audio:', err);
+      // 一時ファイルの削除を試みる
+      try {
+        await fs.unlink(tempFilePath);
+      } catch (e) {
+        // 削除に失敗しても無視
+        console.error('Error deleting temp file:', e);
+      }
+      throw err;
+    }
   }
 }

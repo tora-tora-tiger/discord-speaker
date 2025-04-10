@@ -2,4 +2,6 @@ import Talk from "@/Talk";
 
 const talk = new Talk();
 
-talk.voiceboxTalk("こんにちは、世界！")
+talk.setHost("0.0.0.0");
+talk.setPort(50021);
+talk.voiceboxTalk("デビアン")
