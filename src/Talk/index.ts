@@ -65,11 +65,11 @@ export default class Talk {
     try {
       const response = await fetch(url.toString(), option);
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('[Talk] Network response was not ok');
       }
       return response;
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error('[Talk] Fetch error:', error);
     }
     return undefined;
   }
@@ -94,7 +94,7 @@ export default class Talk {
     const query_response = await this.request(query_url, {method: 'POST'});
     
     if (!query_response) {
-      console.error('Failed to get audio query response');
+      console.error('[Talk] Failed to get audio query response');
       return;
     }
   
@@ -118,7 +118,7 @@ export default class Talk {
     });
   
     if (!synthesis_response) {
-      console.error('Failed to get synthesis response');
+      console.error('[Talk] Failed to get synthesis response');
       return;
     }
   

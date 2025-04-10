@@ -18,14 +18,14 @@ async function execute(interaction: CommandInteraction) {
     return interaction.reply("You need to be in a voice channel to use this command.")
   }
 
-  const connection = joinVoiceChannel({
+  /* const connection = */ joinVoiceChannel({
     channelId: voiceState.channelId,
     guildId: interaction.guild.id,
     adapterCreator: interaction.guild.voiceAdapterCreator,
   });
 
   monitorChannel.set(interaction.guild.id, interaction.channelId);
-  console.log("registered text channel: ", interaction.channelId);
+  console.log("[discord] registered text channel: ", interaction.channelId);
   interaction.reply(`Joined ${voiceState.channel.name}`)
 }
 
