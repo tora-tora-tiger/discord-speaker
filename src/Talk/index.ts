@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 type TalkOptions = {
-  voice: string;
+  speaker: string;
   volume: string;
   speed: string;
   tone: string;
@@ -29,14 +29,14 @@ export default class Talk {
     host: 'localhost',
     port: 50080
   }, options: TalkOptions = {
-    voice: '0',
+    speaker: '1',
     volume: '-1',
     speed: '-1',
     tone: '-1'
   }) {
     this.host   = params.host
     this.port   = params.port;
-    this.voice  = options.voice;
+    this.voice  = options.speaker;
     this.volume = options.volume;
     this.speed  = options.speed;
     this.tone   = options.tone;
@@ -65,11 +65,11 @@ export default class Talk {
     try {
       const response = await fetch(url.toString(), option);
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('[Talk] Network response was not ok');
       }
       return response;
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error('[Talk] Fetch error:', error);
     }
     return undefined;
   }
@@ -78,33 +78,33 @@ export default class Talk {
   async voiceboxTalk(
     text: string,
     options: TalkOptions = {
-      voice: this.voice,
+      speaker: this.voice,
       volume: this.volume,
       speed: this.speed,
       tone: this.tone
     } 
   ): Promise<ArrayBuffer | undefined> {
+    // クエリ生成
     const query_url = new URL(`http://${this.host}:${this.port}/audio_query`);
     query_url.search = new URLSearchParams({
       text: text,
-      speaker: options.voice // Python版ではspeakerというパラメータ名を使用
+      speaker: options.speaker // Python版ではspeakerというパラメータ名を使用
     }).toString();
-  
-    console.log(query_url.toString());
   
     const query_response = await this.request(query_url, {method: 'POST'});
     
     if (!query_response) {
-      console.error('Failed to get audio query response');
+      console.error('[Talk] Failed to get audio query response');
       return;
     }
   
     const query_json = await query_response.json();
     
+    // 音声合成
     const synthesis_url = new URL(`http://${this.host}:${this.port}/synthesis`);
     synthesis_url.search = new URLSearchParams({
       text: text,
-      speaker: options.voice
+      speaker: options.speaker
     }).toString();
   
     const headers = {
@@ -118,7 +118,7 @@ export default class Talk {
     });
   
     if (!synthesis_response) {
-      console.error('Failed to get synthesis response');
+      console.error('[Talk] Failed to get synthesis response');
       return;
     }
   

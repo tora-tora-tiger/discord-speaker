@@ -20,7 +20,7 @@ async function collectFiles (
     (file) => file.endsWith(fileType)
   );
 
-  console.log("found", files);
+  console.log("[discord] found", files);
 
   for (const file of files) {
     const filePath = path.join(folderPath, file);
@@ -41,7 +41,7 @@ async function collectCommands(): Promise<Command[]> {
         commands.push(command);
         // console.log("set command: ", command.data.toJSON());
       } else {
-        console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+        console.log(`[discord/collectCommands][WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
       }
     }
   );

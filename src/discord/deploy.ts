@@ -4,19 +4,17 @@ import { collectCommands } from '@/discord/collectFiles';
 
 
 export default async function deploy(): Promise<void> {
-  const commands = await collectCommands();
   // Grab all the command folders from the commands directory you created earlier
-  // const foldersPath = path.join(__dirname, 'commands');
-  // const commandFolders = fs.readdirSync(foldersPath);
+  const commands = await collectCommands();
 
-  console.log("commands: ", commands);
+  // console.log("[discord] commands: ", commands);
 
   // Construct and prepare an instance of the REST module
   const rest = new REST().setToken(token);
 
   // and deploy your commands!
 	try {
-		console.log(`Started refreshing ${commands.length} application (/) commands.`);
+		console.log(`[discord] Started refreshing ${commands.length} application (/) commands.`);
 
 		// The put method is used to fully refresh all commands in the guild with the current set
 		const data = await rest.put(
@@ -24,10 +22,10 @@ export default async function deploy(): Promise<void> {
 			{ body: commands.map(command => command.data) },
 		) as { length: number; };
 
-		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		console.log(`[discord] Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {
 		// And of course, make sure you catch and log any errors!
-		console.error(error);
+		console.error("[discord]", error);
 	}
 };
 

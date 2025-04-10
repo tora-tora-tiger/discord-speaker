@@ -1,7 +1,10 @@
-import Talk from "@/Talk";
+import Discord from "@/discord";
 
-const talk = new Talk();
+const discord = new Discord();
+discord.start()
 
-talk.setHost("0.0.0.0");
-talk.setPort(50021);
-talk.voiceboxTalk("デビアン")
+process.on("SIGINT", async () => {
+  console.log("[main] SIGINT received. Exiting...");
+  await discord.close();
+  process.exit(0);
+});

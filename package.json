@@ -4,10 +4,8 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "dev-discord": "tsx src/discord/index.ts",
-    "dev-discord-deploy": "tsx src/discord/deploy.ts",
-    "dev-request": "tsx src/request.ts"
+    "start": "tsx src/index.ts",
+    "discord-deploy": "tsx src/discord/deploy.ts"
   },
   "keywords": [],
   "author": "",
