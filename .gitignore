@@ -137,3 +137,6 @@ dist
 
 # discord.js
 config.json
+
+# MacOS
+.DS_Store
