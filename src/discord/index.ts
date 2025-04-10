@@ -4,52 +4,59 @@ import { collectCommands } from '@/discord/collectFiles';
 import executeCommands from '@/discord/events/executeCommands';
 import readMessages from '@/discord/events/readMessages';
 
-import readline from 'readline';
-
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages,  // メッセージイベントを受け取るために必要
-    GatewayIntentBits.MessageContent
-  ]
-});
-
 export const monitorChannel = new Map<Snowflake, Snowflake>();
-(async () => {
+export default class Discord {
   
-  // スラッシュコマンドのmap
-  client.commands = new Collection();
-  
-  const commands = await collectCommands();
-  commands.forEach(command => {
-    client.commands.set(command.data.name, command);
-  });
-  
-  // ログイン
-  client.once(Events.ClientReady, (readyClient: Client<true>) => {
-    console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-  });
-  
-  // スラッシュコマンドの実行
-  client.on(Events.InteractionCreate, executeCommands);
+  private client: Client;
 
-  // メッセージの読み上げ
-  client.on(Events.MessageCreate, readMessages)
+  constructor() {
+    this.client = new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,  // メッセージイベントを受け取るために必要
+        GatewayIntentBits.MessageContent
+      ]
+    });
+    // this.monitorChannel = new Map<Snowflake, Snowflake>();
+  }
+
+  // getMonitorChannel(): Map<Snowflake, Snowflake> {
+  //   return this.monitorChannel;
+  // }
   
-  client.login(token);
-})();
+  async start(): Promise<void> {
+    // スラッシュコマンドのmap
+    this.client.commands = new Collection();
+    
+    const commands = await collectCommands();
+    commands.forEach(command => {
+      this.client.commands.set(command.data.name, command);
+    });
+    
+    // ログイン
+    this.client.once(Events.ClientReady, (readyClient: Client<true>) => {
+      console.log(`[discord] Ready! Logged in as ${readyClient.user.tag}`);
+    });
+    
+    // スラッシュコマンドの実行
+    this.client.on(Events.InteractionCreate, executeCommands);
 
+    // メッセージの読み上げ
+    this.client.on(Events.MessageCreate, readMessages)
+    
+    this.client.login(token);
+  };
 
-// bot終了用
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-rl.question('Press Enter to close client session...', () => {
-  rl.close();
-  client.destroy();
-  process.exit(0);
-});
+  async close(): Promise<boolean> {
+    try {
+      await this.client.destroy();
+    } catch (error) {
+      console.error('[discord] Error closing Discord client:', error);
+      return false;
+    }
+    console.log('[discord] Discord client closed successfully.');
+    return true;
+  }
+};
