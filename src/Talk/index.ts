@@ -101,11 +101,18 @@ export default class Talk {
     } 
   ): Promise<ArrayBuffer | undefined> {
     // クエリ生成
-    const query_url = new URL(`http://${this.host}:${this.port}/audio_query`);
-    query_url.search = new URLSearchParams({
+    const query = {
       text: text,
-      speaker: options.speaker // Python版ではspeakerというパラメータ名を使用
-    }).toString();
+      speaker: options.speaker,
+      speedScale: options.speedScale,
+      pitchScale: options.pitchScale,
+      intonationScale: options.intonationScale,
+      volumeScale: options.volumeScale,
+      kana: options.kana.toString()
+    }
+
+    const query_url = new URL(`http://${this.host}:${this.port}/audio_query`);
+    query_url.search = new URLSearchParams(query).toString();
   
     const query_response = await this.request(query_url, {method: 'POST'});
     
@@ -118,10 +125,7 @@ export default class Talk {
     
     // 音声合成
     const synthesis_url = new URL(`http://${this.host}:${this.port}/synthesis`);
-    synthesis_url.search = new URLSearchParams({
-      text: text,
-      speaker: options.speaker
-    }).toString();
+    synthesis_url.search = new URLSearchParams(query).toString();
   
     const headers = {
       'Content-Type': 'application/json'
