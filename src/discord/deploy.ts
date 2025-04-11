@@ -28,5 +28,3 @@ export default async function deploy(): Promise<void> {
 		console.error("[discord]", error);
 	}
 };
-
-deploy();
