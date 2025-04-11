@@ -6,9 +6,11 @@ import * as path from 'path';
 
 type TalkOptions = {
   speaker: string;
-  volume: string;
-  speed: string;
-  tone: string;
+  speedScale: string;
+  pitchScale: string;
+  intonationScale: string;
+  volumeScale: string;
+  kana: boolean;
 };
 
 type Params = {
@@ -20,26 +22,32 @@ export default class Talk {
   host: string;
   port: number;
 
-  voice: string;
-  volume: string;
-  speed: string;
-  tone: string;
+  speaker: string
+  speedScale: string;
+  pitchScale: string;
+  intonationScale: string
+  volumeScale: string;
+  kana: boolean;
 
   constructor(params: Params = {
     host: 'localhost',
     port: 50080
   }, options: TalkOptions = {
     speaker: '1',
-    volume: '-1',
-    speed: '-1',
-    tone: '-1'
+    speedScale: '0',
+    pitchScale: '0',
+    intonationScale: '0',
+    volumeScale: '0',
+    kana: false
   }) {
     this.host   = params.host
     this.port   = params.port;
-    this.voice  = options.speaker;
-    this.volume = options.volume;
-    this.speed  = options.speed;
-    this.tone   = options.tone;
+    this.speaker  = options.speaker;
+    this.speedScale  = options.speedScale;
+    this.pitchScale  = options.pitchScale;
+    this.intonationScale = options.intonationScale;
+    this.volumeScale = options.volumeScale;
+    this.kana = options.kana;
   }
 
   setHost(host: string): void {
@@ -48,17 +56,23 @@ export default class Talk {
   setPort(port: number): void {
     this.port = port;
   }
-  setVoice(voice: string): void {
-    this.voice = voice;
+  setSpeaker(speaker: string): void {
+    this.speaker = speaker;
   }
-  setVolume(volume: string): void {  
-    this.volume = volume;
+  setSpeedScale(speedScale: string): void {
+    this.speedScale = speedScale;
   }
-  setSpeed(speed: string): void {
-    this.speed = speed;
+  setPitchScale(pitchScale: string): void {
+    this.pitchScale = pitchScale;
   }
-  setTone(tone: string): void {
-    this.tone = tone;
+  setIntonationScale(intonationScale: string): void {
+    this.intonationScale = intonationScale;
+  }
+  setVolumeScale(volumeScale: string): void {
+    this.volumeScale = volumeScale;
+  }
+  setKana(kana: boolean): void {
+    this.kana = kana;
   }
 
   private async request(url: URL, option: RequestInit): Promise<Response | undefined> {
@@ -78,10 +92,12 @@ export default class Talk {
   async voiceboxTalk(
     text: string,
     options: TalkOptions = {
-      speaker: this.voice,
-      volume: this.volume,
-      speed: this.speed,
-      tone: this.tone
+      speaker: this.speaker,
+      volumeScale: this.volumeScale,
+      speedScale: this.speedScale,
+      pitchScale: this.pitchScale,
+      intonationScale: this.intonationScale,
+      kana: this.kana
     } 
   ): Promise<ArrayBuffer | undefined> {
     // クエリ生成

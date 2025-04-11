@@ -1,4 +1,9 @@
 import Discord from "@/discord";
+import Talk from "@/Talk";
+
+const talk = new Talk();
+export default talk;
+talk.setPort(50021);
 
 const discord = new Discord();
 discord.start()
