@@ -3,6 +3,7 @@ import { token } from 'config.json';
 import { collectCommands } from '@/discord/collectFiles';
 import executeCommands from '@/discord/events/executeCommands';
 import readMessages from '@/discord/events/readMessages';
+import deploy from './deploy';
 
 export const monitorChannel = new Map<Snowflake, Snowflake>();
 export default class Discord {
@@ -25,6 +26,8 @@ export default class Discord {
   // getMonitorChannel(): Map<Snowflake, Snowflake> {
   //   return this.monitorChannel;
   // }
+
+  deployCommands:() => Promise<void> = deploy;
   
   async start(): Promise<void> {
     // スラッシュコマンドのmap
