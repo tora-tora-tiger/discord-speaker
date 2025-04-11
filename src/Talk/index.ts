@@ -101,14 +101,13 @@ export default class Talk {
     } 
   ): Promise<ArrayBuffer | undefined> {
     // クエリ生成
-    const query = {
+    const query: {
+      text: string;
+      speaker: string;
+      core_version?: string;
+    } = {
       text: text,
-      speaker: options.speaker,
-      speedScale: options.speedScale,
-      pitchScale: options.pitchScale,
-      intonationScale: options.intonationScale,
-      volumeScale: options.volumeScale,
-      kana: options.kana.toString()
+      speaker: options.speaker
     }
 
     const query_url = new URL(`http://${this.host}:${this.port}/audio_query`);
@@ -123,14 +122,14 @@ export default class Talk {
   
     const query_json = await query_response.json();
 
-    console.log('[Talk] Audio query response:', query_json);
-
     query_json.speaker = options.speaker;
     query_json.speedScale = options.speedScale;
     query_json.pitchScale = options.pitchScale;
     query_json.intonationScale = options.intonationScale;
     query_json.volumeScale = options.volumeScale;
     query_json.kana = options.kana.toString();
+    
+    console.log('[Talk] query_json:', query_json);
     
     // 音声合成
     const synthesis_url = new URL(`http://${this.host}:${this.port}/synthesis`);
