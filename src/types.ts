@@ -1,4 +1,4 @@
-import type { Collection, Message, PermissionResolvable, SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction, ModalSubmitInteraction, CacheType, CommandInteraction } from "discord.js";
+import type { Collection, PermissionResolvable, SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction, ModalSubmitInteraction, CacheType, CommandInteraction } from "discord.js";
 
 declare module "discord.js" {
 	interface Client {

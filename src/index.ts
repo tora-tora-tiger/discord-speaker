@@ -1,6 +1,12 @@
+import Talk from "@/Talk";
 import Discord from "@/discord";
 
+const talk = new Talk();
+export default talk;
+talk.setPort(50021);
+
 const discord = new Discord();
+discord.deployCommands();
 discord.start()
 
 process.on("SIGINT", async () => {

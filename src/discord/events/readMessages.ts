@@ -1,11 +1,8 @@
 import { Message, OmitPartialGroupDMChannel } from "discord.js";
 import { monitorChannel } from "@/discord";
-import Talk from "@/Talk";
 import { AudioPlayer, createAudioResource, getVoiceConnection, StreamType } from "@discordjs/voice";
 import { Readable } from "stream";
-
-const talk = new Talk();
-talk.setPort(50021);
+import talk from "@/index";
 
 async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
   if (!message.guild) return;

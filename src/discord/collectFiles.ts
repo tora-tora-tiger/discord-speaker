@@ -39,7 +39,7 @@ async function collectCommands(): Promise<Command[]> {
       const command = (await import(pathToFileURL(filePath).href)).default;
       if (command.data && command.execute) {
         commands.push(command);
-        // console.log("set command: ", command.data.toJSON());
+        console.log("[discord] set command: ", command.data.name);
       } else {
         console.log(`[discord/collectCommands][WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
       }

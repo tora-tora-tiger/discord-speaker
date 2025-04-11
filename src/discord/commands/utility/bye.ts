@@ -1,5 +1,5 @@
-import { getVoiceConnection } from '@discordjs/voice';
 import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import { getVoiceConnection } from '@discordjs/voice';
 import { monitorChannel } from '@/discord';
 
 const data = new SlashCommandBuilder()
