@@ -34,10 +34,10 @@ export default class Talk {
     port: 50080
   }, options: TalkOptions = {
     speaker: '1',
-    speedScale: '0',
+    speedScale: '1',
     pitchScale: '0',
-    intonationScale: '0',
-    volumeScale: '0',
+    intonationScale: '1',
+    volumeScale: '1',
     kana: false
   }) {
     this.host   = params.host
@@ -122,6 +122,15 @@ export default class Talk {
     }
   
     const query_json = await query_response.json();
+
+    console.log('[Talk] Audio query response:', query_json);
+
+    query_json.speaker = options.speaker;
+    query_json.speedScale = options.speedScale;
+    query_json.pitchScale = options.pitchScale;
+    query_json.intonationScale = options.intonationScale;
+    query_json.volumeScale = options.volumeScale;
+    query_json.kana = options.kana.toString();
     
     // 音声合成
     const synthesis_url = new URL(`http://${this.host}:${this.port}/synthesis`);
