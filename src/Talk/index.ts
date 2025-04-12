@@ -122,6 +122,7 @@ export default class Talk {
   
     const query_json = await query_response.json();
 
+    // クエリのパラメータを設定
     query_json.speaker = options.speaker;
     query_json.speedScale = options.speedScale;
     query_json.pitchScale = options.pitchScale;
@@ -129,7 +130,7 @@ export default class Talk {
     query_json.volumeScale = options.volumeScale;
     query_json.kana = options.kana.toString();
     
-    console.log('[Talk] query_json:', query_json);
+    // console.log('[Talk] query_json:', query_json);
     
     // 音声合成
     const synthesis_url = new URL(`http://${this.host}:${this.port}/synthesis`);
