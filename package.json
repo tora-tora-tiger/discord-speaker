@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "tsx src/index.ts",
-    "discord-deploy": "tsx src/discord/deploy.ts"
+    "commands-deploy": "tsx src/discord/deploy.ts"
   },
   "keywords": [],
   "author": "",
