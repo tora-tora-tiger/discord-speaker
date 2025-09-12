@@ -9,9 +9,6 @@ services:
       - NODE_ENV=production
       # Discord Bot Token（環境変数ファイルから設定）
       - DISCORD_TOKEN=${DISCORD_TOKEN}
-    volumes:
-      # 音声キャッシュ用ディレクトリ（必要に応じて）
-      - ./cache:/app/cache
     networks:
       - discord-network
     # ヘルスチェック
@@ -37,7 +34,3 @@ services:
 networks:
   discord-network:
     driver: bridge
-
-volumes:
-  cache:
-    driver: local
