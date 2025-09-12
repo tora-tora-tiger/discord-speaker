@@ -36,6 +36,25 @@ async function collectCommands(): Promise<Command[]> {
 
   await collectFiles(
     "commands/utility",
+    "index.ts",
+    async (filePath) => {
+      const command = (await import(pathToFileURL(filePath).href)).default;
+      if (command.data) {
+        commands.push(command);
+        console.log("[discord] set command: ", command.data.name);
+      } else {
+        console.log(`[discord/collectCommands][WARNING] The command at ${filePath} is missing a required "data" property.`);
+      }
+    }
+  );
+  return commands;
+}
+
+async function collectDataCommands(): Promise<Command[]> {
+  const commands: Command[] = [];
+
+  await collectFiles(
+    "commands/utility",
     "data.ts",
     async (filePath) => {
       const command = (await import(pathToFileURL(filePath).href)).default;
@@ -51,4 +70,4 @@ async function collectCommands(): Promise<Command[]> {
 }
 
 export default collectFiles;
-export { collectCommands };
+export { collectCommands, collectDataCommands };
