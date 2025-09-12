@@ -28,10 +28,12 @@ WORKDIR /app
 # pnpmをグローバルにインストール
 RUN npm install -g pnpm
 
-# ビルド成果物と依存関係のみをコピー
-COPY --from=builder /app/package.json pnpm-lock.yaml ./
+# ビルド成果物と依存関係のコピー
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-lock.yaml ./
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
+# 本番用に依存関係を再インストール（devDependenciesを除外）
+RUN pnpm install --prod --frozen-lockfile
 
 # セキュリティのために非rootユーザーを作成
 RUN addgroup -g 1001 -S nodejs && \
@@ -48,5 +50,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD node -e "process.exit(0)" || exit 1
 
-# Botを起動（ビルド後のJSファイルを実行）
-CMD ["node", "build/index.js"]
+# Botを起動
+CMD ["pnpm", "run", "start"]
