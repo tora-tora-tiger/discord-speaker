@@ -1,5 +1,5 @@
-# 軽量でセキュリティが強化されたNode.js 18 Alpineイメージを使用
-FROM node:18-alpine
+# マルチステージビルド：ビルドステージ
+FROM node:18-alpine as builder
 
 # ワーキングディレクトリを設定
 WORKDIR /app
@@ -11,10 +11,27 @@ RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml ./
 
 # 依存関係をインストール
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # ソースコードをコピー
 COPY . .
+
+# TypeScriptをビルド
+RUN pnpm run build
+
+# 実行ステージ：最終イメージ
+FROM node:18-alpine
+
+# ワーキングディレクトリを設定
+WORKDIR /app
+
+# pnpmをグローバルにインストール
+RUN npm install -g pnpm
+
+# ビルド成果物と依存関係のみをコピー
+COPY --from=builder /app/package.json pnpm-lock.yaml ./
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/node_modules ./node_modules
 
 # セキュリティのために非rootユーザーを作成
 RUN addgroup -g 1001 -S nodejs && \
@@ -28,8 +45,8 @@ USER bot
 EXPOSE 3000
 
 # ヘルスチェック
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD node -e "process.exit(0)" || exit 1
 
-# Botを起動
-CMD ["pnpm", "run", "start"]
+# Botを起動（ビルド後のJSファイルを実行）
+CMD ["node", "build/index.js"]
