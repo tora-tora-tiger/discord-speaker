@@ -11,7 +11,7 @@ RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml ./
 
 # 依存関係をインストール
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile
 
 # ソースコードをコピー
 COPY . .
