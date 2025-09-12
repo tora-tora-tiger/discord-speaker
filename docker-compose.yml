@@ -19,7 +19,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # VoiceVoxサーバー（別コンテナで実行する場合）
   voicevox:
     image: voicevox/voicevox_engine:latest
     container_name: voicevox-engine
