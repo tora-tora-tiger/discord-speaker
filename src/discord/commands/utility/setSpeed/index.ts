@@ -1,14 +1,6 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import { CommandInteraction } from 'discord.js';
 import talk from "@/server";
-
-const data = new SlashCommandBuilder()
-  .setName('set-speed')
-  .setDescription('set speed')
-  .addNumberOption(option =>
-    option.setName('speed-scale')
-      .setDescription('読み上げspeed')
-      .setRequired(true)
-  );
+import data from './data';
 
 const execute = async function(interaction: CommandInteraction) {
   const speedScale = interaction.options.get('speed-scale');

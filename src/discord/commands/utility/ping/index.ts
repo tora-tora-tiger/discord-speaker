@@ -1,8 +1,5 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
-
-const data = new SlashCommandBuilder()
-  .setName('ping')
-  .setDescription('Replies with Pong!');
+import { CommandInteraction } from 'discord.js';
+import data from './data';
 
 const execute = async function(interaction: CommandInteraction) {
   await interaction.reply('Pong!');

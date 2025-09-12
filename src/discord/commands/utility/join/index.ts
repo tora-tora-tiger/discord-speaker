@@ -1,15 +1,12 @@
-import { CommandInteraction, GuildMember, SlashCommandBuilder } from "discord.js"
+import { CommandInteraction, GuildMember } from "discord.js"
 import { joinVoiceChannel } from "@discordjs/voice";
+import { monitorChannel } from "@/discord";
+import data from "./data";
 
 // [TODO] VCの再接続に対応する
-const data = new SlashCommandBuilder()
-  .setName("join")
-  .setDescription("Join a voice channel");
 
 async function execute(interaction: CommandInteraction) {
-  // 遅延importでmonitorChannelを取得
-  const { monitorChannel } = await import("../../index");
-
+  
   if(!interaction.member) return;
   if(!interaction.guild) return;
   if(interaction.user.bot) return;

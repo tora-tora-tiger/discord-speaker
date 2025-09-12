@@ -1,14 +1,6 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import { CommandInteraction } from 'discord.js';
 import talk from "@/server";
-
-const data = new SlashCommandBuilder()
-  .setName('set-speaker')
-  .setDescription('set speaker')
-  .addNumberOption(option =>
-    option.setName('speaker')
-      .setDescription('喋る人')
-      .setRequired(true)
-  );
+import data from './data';
 
 const execute = async function(interaction: CommandInteraction) {
   const speaker = interaction.options.get('speaker');
