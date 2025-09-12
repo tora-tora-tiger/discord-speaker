@@ -1,5 +1,5 @@
 import Talk from "@/Talk";
-import Discord from "@/discord";
+import Discord from "./discord/index";
 
 const talk = new Talk();
 export default talk;

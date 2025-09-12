@@ -2,7 +2,7 @@ import { Message, OmitPartialGroupDMChannel } from "discord.js";
 import { monitorChannel } from "@/discord";
 import { AudioPlayer, AudioPlayerStatus, AudioResource, createAudioResource, getVoiceConnection, StreamType } from "@discordjs/voice";
 import { Readable } from "stream";
-import talk from "@/index";
+import talk from "@/server";
 
 // [TODO] ギルドごとにキューを持つようにする
 const player = new AudioPlayer();

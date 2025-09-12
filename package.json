@@ -2,12 +2,12 @@
   "name": "discord-speaker",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "src/server.ts",
   "scripts": {
     "build": "tsc && tsc-alias",
-    "start": "node -r dotenv/config build/index.js",
-    "dev": "tsx -r dotenv/config src/index.ts",
-    "commands-deploy": "tsx src/discord/deploy.ts"
+    "start": "node build/server.js",
+    "dev": "tsx -r dotenv/config src/server.ts",
+    "commands-deploy": "tsx -r dotenv/config src/deploy.ts"
   },
   "keywords": [],
   "author": "",

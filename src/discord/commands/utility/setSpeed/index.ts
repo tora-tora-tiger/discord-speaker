@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
-import talk from "@/index";
+import talk from "@/server";
 
 const data = new SlashCommandBuilder()
   .setName('set-speed')
