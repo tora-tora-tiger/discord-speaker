@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  discord-speaker:
+    build: .
+    container_name: discord-speaker-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # Discord Bot Token（環境変数ファイルから設定）
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+    volumes:
+      # 音声キャッシュ用ディレクトリ（必要に応じて）
+      - ./cache:/app/cache
+    networks:
+      - discord-network
+    # ヘルスチェック
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # VoiceVoxサーバー（別コンテナで実行する場合）
+  voicevox:
+    image: voicevox/voicevox_engine:latest
+    container_name: voicevox-engine
+    restart: unless-stopped
+    ports:
+      - "50021:50021"
+    networks:
+      - discord-network
+    profiles:
+      - voicevox
+
+networks:
+  discord-network:
+    driver: bridge
+
+volumes:
+  cache:
+    driver: local

@@ -1,9 +1,0 @@
-services:
-  voicebox:
-    image: voicevox/voicevox_engine:cpu-latest
-    container_name: voicebox
-    ports: 
-      - "50021:50021"
-    restart: unless-stopped
-  bot:
-    build: .
