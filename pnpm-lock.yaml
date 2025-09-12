@@ -24,6 +24,9 @@ importers:
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
+      dotenv:
+        specifier: ^17.2.2
+        version: 17.2.2
       eslint:
         specifier: ^9.23.0
         version: 9.23.0
@@ -439,6 +442,10 @@ packages:
   discord.js@14.18.0:
     resolution: {integrity: sha512-SvU5kVUvwunQhN2/+0t55QW/1EHfB1lp0TtLZUSXVHDmyHTrdOj5LRKdR0zLcybaA15F+NtdWuWmGOX9lE+CAw==}
     engines: {node: '>=18'}
+
+  dotenv@17.2.2:
+    resolution: {integrity: sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q==}
+    engines: {node: '>=12'}
 
   esbuild@0.25.1:
     resolution: {integrity: sha512-BGO5LtrGC7vxnqucAe/rmvKdJllfGaYWdyABvyMoXQlfYMb2bbRuReWR5tEGE//4LcNJj9XrkovTqNYRFZHAMQ==}
@@ -1192,6 +1199,8 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  dotenv@17.2.2: {}
 
   esbuild@0.25.1:
     optionalDependencies:

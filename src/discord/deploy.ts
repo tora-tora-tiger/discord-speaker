@@ -1,6 +1,11 @@
 import { REST, Routes } from 'discord.js';
-import { clientId, token } from 'config.json';
 import { collectCommands } from '@/discord/collectFiles';
+
+const token = process.env.DISCORD_TOKEN ?? '';
+const clientId = process.env.CLIENT_ID ?? '';
+if (!token || !clientId) {
+	throw new Error('DISCORD_TOKEN or CLIENT_ID is not defined in environment variables.');
+}
 
 
 export default async function deploy(): Promise<void> {
