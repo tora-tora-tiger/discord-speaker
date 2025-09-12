@@ -14,4 +14,4 @@ const execute = async function(interaction: CommandInteraction) {
   await interaction.reply("Not connected to any voice channel.");
 }
 
-export default { execute };
+export default execute;

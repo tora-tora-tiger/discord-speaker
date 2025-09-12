@@ -14,4 +14,4 @@ const execute = async function(interaction: CommandInteraction) {
   // [TODO] すでに読み上げ中の音声に反映されるようにする
 }
 
-export default { execute };
+export default execute;

@@ -24,4 +24,4 @@ async function execute(interaction: CommandInteraction) {
   interaction.reply(`Joined ${voiceState.channel.name}`)
 }
 
-export default { execute };
+export default execute;
