@@ -100,16 +100,18 @@ class _ReadMessages {
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
     const linkPattern = new RegExp(`\\w+://[\\w!?/+\\-_~;.,*&@#$%()'[\\]=]+`);
     if(text.match(linkPattern)) {
-      return text.replace(linkPattern, "ゆーあーるえる省略");
+      text = text.replace(linkPattern, "ゆーあーるえる省略");
     }
     // [TODO] @mentionを省略する
     const mentionPattern = new RegExp(`<@\\d+>`);
     if(text.match(mentionPattern)) {
-      return text.replace(mentionPattern, "めんしょん省略");
+      text = text.replace(mentionPattern, "めんしょん省略");
     }
     // [TODO] 絵文字を省略する
     // [TODO] 画像を省略する
     // [TODO] 動画を省略する
+
+    console.log("[discord] fixed text:", text);
     return text;
   }
 }
