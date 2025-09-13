@@ -1,9 +1,14 @@
 import { Client, Events, GatewayIntentBits, Collection, Snowflake } from 'discord.js';
-import { token } from 'config.json';
 import { collectCommands } from '@/discord/collectFiles';
 import executeCommands from '@/discord/events/executeCommands';
 import readMessages from '@/discord/events/readMessages';
 import deploy from './deploy';
+
+const token = process.env.DISCORD_TOKEN ?? '';
+
+if (!token) {
+  throw new Error('DISCORD_TOKEN is not defined in environment variables.');
+}
 
 export const monitorChannel = new Map<Snowflake, Snowflake>();
 export default class Discord {

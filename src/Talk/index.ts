@@ -15,12 +15,12 @@ type TalkOptions = {
 
 type Params = {
   host: string;
-  port: number;
+  port: string;
 };
 
 export default class Talk {
   host: string;
-  port: number;
+  port: string;
 
   speaker: string
   speedScale: string;
@@ -31,7 +31,7 @@ export default class Talk {
 
   constructor(params: Params = {
     host: 'localhost',
-    port: 50080
+    port: '50080'
   }, options: TalkOptions = {
     speaker: '1',
     speedScale: '1',
@@ -53,7 +53,7 @@ export default class Talk {
   setHost(host: string): void {
     this.host = host;
   }
-  setPort(port: number): void {
+  setPort(port: string): void {
     this.port = port;
   }
   setSpeaker(speaker: string): void {
@@ -77,6 +77,7 @@ export default class Talk {
 
   private async request(url: URL, option: RequestInit): Promise<Response | undefined> {
     try {
+      console.log('[Talk] Requesting:', url.toString(), option);
       const response = await fetch(url.toString(), option);
       if (!response.ok) {
         throw new Error('[Talk] Network response was not ok');

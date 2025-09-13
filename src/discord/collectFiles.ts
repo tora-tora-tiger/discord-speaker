@@ -3,28 +3,30 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import type { Command } from '@/types';
 
-/* ディレクトリ配下の特定の拡張子のファイルを取得し，callbackを実行
+/* ディレクトリ配下のサブディレクトリから特定のファイル名を取得し，callbackを実行
  * @param directory - ディレクトリの名前
- * @param fileType - ファイルの拡張子
+ * @param fileName - 検索するファイル名
  * @param callback - コールバック関数
  * @returns {Promise<void>}
  */
 async function collectFiles (
   directory: string,
-  fileType: string,
+  fileName: string,
   callback: (filePath: string) => Promise<void>,
 ): Promise<void> {
 
   const folderPath = path.join(__dirname, directory);
-  const files = fs.readdirSync(folderPath).filter(
-    (file) => file.endsWith(fileType)
-  );
+  const subdirs = fs.readdirSync(folderPath, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
 
-  console.log("[discord] found", files);
+  console.log("[discord] found subdirs:", subdirs);
 
-  for (const file of files) {
-    const filePath = path.join(folderPath, file);
-    await callback(filePath);
+  for (const subdir of subdirs) {
+    const dataFilePath = path.join(folderPath, subdir, fileName);
+    if (fs.existsSync(dataFilePath)) {
+      await callback(dataFilePath);
+    }
   }
 }
 
@@ -34,14 +36,33 @@ async function collectCommands(): Promise<Command[]> {
 
   await collectFiles(
     "commands/utility",
-    ".ts",
+    "index.ts",
     async (filePath) => {
       const command = (await import(pathToFileURL(filePath).href)).default;
-      if (command.data && command.execute) {
+      if (command.data) {
         commands.push(command);
         console.log("[discord] set command: ", command.data.name);
       } else {
-        console.log(`[discord/collectCommands][WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+        console.log(`[discord/collectCommands][WARNING] The command at ${filePath} is missing a required "data" property.`);
+      }
+    }
+  );
+  return commands;
+}
+
+async function collectDataCommands(): Promise<Command[]> {
+  const commands: Command[] = [];
+
+  await collectFiles(
+    "commands/utility",
+    "data.ts",
+    async (filePath) => {
+      const command = (await import(pathToFileURL(filePath).href)).default;
+      if (command.data) {
+        commands.push(command);
+        console.log("[discord] set command: ", command.data.name);
+      } else {
+        console.log(`[discord/collectCommands][WARNING] The command at ${filePath} is missing a required "data" property.`);
       }
     }
   );
@@ -49,4 +70,4 @@ async function collectCommands(): Promise<Command[]> {
 }
 
 export default collectFiles;
-export { collectCommands };
+export { collectCommands, collectDataCommands };

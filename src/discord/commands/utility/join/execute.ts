@@ -1,11 +1,6 @@
-import { CommandInteraction, GuildMember, SlashCommandBuilder } from "discord.js"
+import { CommandInteraction, GuildMember } from "discord.js"
 import { joinVoiceChannel } from "@discordjs/voice";
 import { monitorChannel } from "@/discord";
-
-// [TODO] VCの再接続に対応する
-const data = new SlashCommandBuilder()
-  .setName("join")
-  .setDescription("Join a voice channel");
 
 async function execute(interaction: CommandInteraction) {
   if(!interaction.member) return;
@@ -29,7 +24,4 @@ async function execute(interaction: CommandInteraction) {
   interaction.reply(`Joined ${voiceState.channel.name}`)
 }
 
-export default {
-  data: data,
-  execute: execute
-}
+export default execute;

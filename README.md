@@ -9,12 +9,10 @@ Discordで特定のチャンネルを監視し、そのチャンネルに投稿�
 
 # How to start server
 botを起動する
-discord botに接続するために，`config.json`をトップに置いて下さい
+discord botに接続するために，`.env`をトップに置いて下さい
 ```config.json
-{
-    "token": "secret token",
-    "client": "client id",
-}
+DISCORD_TOKEN=
+CLIENT_ID=
 ```
 ```
 $ git clone https://github.com/tora-tora-tiger/discord-speaker.git

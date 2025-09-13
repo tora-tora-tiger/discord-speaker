@@ -1,0 +1,33 @@
+services:
+  discord-speaker:
+    build: .
+    container_name: discord-speaker-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - CLIENT_ID=${CLIENT_ID}
+    networks:
+      - discord-network
+    # ヘルスチェック
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  voicevox:
+    image: voicevox/voicevox_engine:latest
+    container_name: voicevox-engine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:50021:50021"
+    networks:
+      - discord-network
+    profiles:
+      - voicevox
+
+networks:
+  discord-network:
+    driver: bridge

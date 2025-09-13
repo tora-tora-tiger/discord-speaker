@@ -1,11 +1,16 @@
 import { REST, Routes } from 'discord.js';
-import { clientId, token } from 'config.json';
-import { collectCommands } from '@/discord/collectFiles';
+import { collectDataCommands } from '@/discord/collectFiles';
+
+const token = process.env.DISCORD_TOKEN ?? '';
+const clientId = process.env.CLIENT_ID ?? '';
+if (!token || !clientId) {
+	throw new Error('DISCORD_TOKEN or CLIENT_ID is not defined in environment variables.');
+}
 
 
 export default async function deploy(): Promise<void> {
   // Grab all the command folders from the commands directory you created earlier
-  const commands = await collectCommands();
+  const commands = await collectDataCommands();
 
   // console.log("[discord] commands: ", commands);
 
