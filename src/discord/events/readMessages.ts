@@ -24,6 +24,7 @@ async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
 }
 
 // 各ギルドごとに読み上げを管理するクラス
+// [TODO] Talkクラスもギルドごとに分ける
 class _ReadMessages {
   private player;
   private audioResourceQueue;
