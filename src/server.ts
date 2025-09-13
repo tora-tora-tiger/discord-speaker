@@ -1,9 +1,11 @@
 import Talk from "@/Talk";
 import Discord from "./discord/index";
 
-const talk = new Talk();
+const talk = new Talk({
+  "host": process.env.TTS_HOST ?? "voicevox",
+  "port": process.env.TTS_PORT ?? "50021"
+});
 export default talk;
-talk.setPort(50021);
 
 const discord = new Discord();
 discord.deployCommands();

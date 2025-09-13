@@ -21,6 +21,8 @@ services:
     image: voicevox/voicevox_engine:latest
     container_name: voicevox-engine
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:50021:50021"
     networks:
       - discord-network
     profiles:

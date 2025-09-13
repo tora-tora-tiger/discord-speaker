@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc && tsc-alias",
     "start": "node build/server.js",
+    "start:nobuild": "tsx src/server.ts",
     "dev": "tsx -r dotenv/config src/server.ts",
     "commands-deploy": "tsx -r dotenv/config src/deploy.ts"
   },
@@ -16,6 +17,7 @@
   "dependencies": {
     "@discordjs/voice": "^0.18.0",
     "discord.js": "^14.18.0",
+    "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
   "devDependencies": {
@@ -25,7 +27,6 @@
     "eslint": "^9.23.0",
     "globals": "^16.0.0",
     "tsc-alias": "^1.8.10",
-    "tsx": "^4.19.3",
     "typescript-eslint": "^8.28.0"
   },
   "pnpm": {
