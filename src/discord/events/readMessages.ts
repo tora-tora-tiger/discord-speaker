@@ -23,6 +23,7 @@ async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
   }
 }
 
+// 各ギルドごとに読み上げを管理するクラス
 class _ReadMessages {
   private player;
   private audioResourceQueue;
@@ -68,7 +69,7 @@ class _ReadMessages {
     }
     connection?.subscribe(this.player);
     if (!this.player) {
-      console.error(`[discord${this.guild.id}] No audio player found`);
+      console.error(`[discord${this.guild.name}] No audio player found`);
       return;
     }
 
@@ -102,7 +103,7 @@ class _ReadMessages {
     if(text.match(linkPattern)) {
       text = text.replace(linkPattern, "ゆーあーるえる省略");
     }
-    // [TODO] @mentionを省略する
+    // @mentionを省略する
     const mentionPattern = new RegExp(`<@\\d+>`);
     if(text.match(mentionPattern)) {
       text = text.replace(mentionPattern, "めんしょん省略");
