@@ -76,6 +76,7 @@ class _ReadMessages {
     const voice = await talk.voiceboxTalk(this.fixText(message.content));
     if(!voice) {
       console.error(`[discord${this.guild.id}] Failed to get message voice`);
+      // message.reply("音声合成に失敗しました"); 権限足りなくて返信できない
       return;
     }
     const stream = new Readable();
