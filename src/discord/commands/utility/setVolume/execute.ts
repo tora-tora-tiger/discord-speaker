@@ -1,14 +1,5 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
-import talk from "@/index";
-
-const data = new SlashCommandBuilder()
-  .setName('set-volume')
-  .setDescription('set volume')
-  .addNumberOption(option =>
-    option.setName('speed-volume')
-      .setDescription('読み上げvolume')
-      .setRequired(true)
-  );
+import talk from "@/server";
+import { CommandInteraction } from "discord.js";
 
 const execute = async function(interaction: CommandInteraction) {
   const volumeScale = interaction.options.get('speed-volume');
@@ -23,7 +14,4 @@ const execute = async function(interaction: CommandInteraction) {
   // [TODO] すでに読み上げ中の音声に反映されるようにする
 }
 
-export default { 
-  data: data,
-  execute: execute
-};
+export default execute;
