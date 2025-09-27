@@ -111,11 +111,13 @@ class _ReadMessages {
       const member = this.guild.members.cache.get(userId);
       return member ? `あっと${member.displayName}` : "あっとあんのうん";
     });
-    // ロールメンションを省略する
+    // ロールメンションをロール名に置き換える
     const roleMentionPattern = /<@&\d+>/;
-    if(text.match(roleMentionPattern)) {
-      text = text.replace(roleMentionPattern, "ろーるめんしょん省略");
-    }
+    text = text.replace(roleMentionPattern, (match) => {
+      const roleId = match.replace(/<@&/, "").replace(">", "");
+      const role = this.guild.roles.cache.get(roleId);
+      return role ? `あっと${role.name}` : "ろーるあんのうん";
+    });
     // チャンネルメンションをチャンネル名に置き換える
     const channelMentionPattern = /<#\d+>/;
     text = text.replace(channelMentionPattern, (match) => {
