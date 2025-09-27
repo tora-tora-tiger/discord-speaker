@@ -100,7 +100,7 @@ class _ReadMessages {
   private fixText(text: string): string {
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
-    const linkPattern = /`\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/;
+    const linkPattern = /\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/;
     if(text.match(linkPattern)) {
       text = text.replace(linkPattern, "ゆーあーるえる");
     }
