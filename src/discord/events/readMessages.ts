@@ -102,7 +102,7 @@ class _ReadMessages {
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
     const linkPattern = /`\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/;
     if(text.match(linkPattern)) {
-      text = text.replace(linkPattern, "ゆーあーるえ");
+      text = text.replace(linkPattern, "ゆーあーるえる");
     }
     // @mentionをユーザー名に置き換える
     const mentionPattern = /<@!?\d+>/;
