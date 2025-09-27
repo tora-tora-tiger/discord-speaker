@@ -123,7 +123,7 @@ class _ReadMessages {
     text = text.replace(channelMentionPattern, (match) => {
       const channelId = match.replace(/<#/, "").replace(">", "");
       const channel = this.guild.channels.cache.get(channelId);
-      return channel ? `#${channel.name}` : match;
+      return channel ? `#${channel.name}` : "不明";
     });
     // [TODO] 絵文字を省略する
 
