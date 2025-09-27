@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-slim
 
 # ワーキングディレクトリを設定
 WORKDIR /app
@@ -7,7 +7,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # FFmpegをインストール
-RUN apk add --no-cache ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg && apt-get clean
 
 # レイヤーキャシングのためにpackageファイルを先にコピー
 COPY package.json pnpm-lock.yaml ./
@@ -19,8 +19,8 @@ RUN pnpm install --prod --frozen-lockfile
 COPY . .
 
 # セキュリティのために非rootユーザーを作成
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S bot -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -G nodejs -m -s /bin/bash bot
 
 # アプリディレクトリの所有権を変更
 RUN chown -R bot:nodejs /app
