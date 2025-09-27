@@ -100,15 +100,29 @@ class _ReadMessages {
   private fixText(text: string): string {
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
-    const linkPattern = new RegExp(`\\w+://[\\w!?/+\\-_~;.,*&@#$%()'[\\]=]+`);
+    const linkPattern = /`\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/;
     if(text.match(linkPattern)) {
       text = text.replace(linkPattern, "ゆーあーるえる省略");
     }
-    // @mentionを省略する
-    const mentionPattern = new RegExp(`<@\\d+>`);
-    if(text.match(mentionPattern)) {
-      text = text.replace(mentionPattern, "めんしょん省略");
+    // @mentionをユーザー名に置き換える
+    const mentionPattern = /<@!?\d+>/;
+    text = text.replace(mentionPattern, (match) => {
+      const userId = match.replace(/<@!?/, "").replace(">", "");
+      const member = this.guild.members.cache.get(userId);
+      return member ? `あっと${member.displayName}` : "あっとあんのうん";
+    });
+    // ロールメンションを省略する
+    const roleMentionPattern = /<@&\d+>/;
+    if(text.match(roleMentionPattern)) {
+      text = text.replace(roleMentionPattern, "ろーるめんしょん省略");
     }
+    // チャンネルメンションをチャンネル名に置き換える
+    const channelMentionPattern = /<#\d+>/;
+    text = text.replace(channelMentionPattern, (match) => {
+      const channelId = match.replace(/<#/, "").replace(">", "");
+      const channel = this.guild.channels.cache.get(channelId);
+      return channel ? `#${channel.name}` : match;
+    });
     // [TODO] 絵文字を省略する
     // [TODO] 画像を省略する
     // [TODO] 動画を省略する
