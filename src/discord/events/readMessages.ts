@@ -128,8 +128,25 @@ class _ReadMessages {
     // [TODO] 絵文字を省略する
 
     // カスタム絵文字を名前に置き換える
-    const emojiPattern = /<a?:(\w+):\d+>/g;
+    const emojiPattern = /<a?:(\w+):[\d-]+>/g;
     text = text.replace(emojiPattern, "$1");
+
+    // Guild Navigationを置き換え
+    const guildNavigationPattern = /<id:(\d+)>/;
+    text = text.replace(guildNavigationPattern, (match, p1) => {
+      switch(p1) {
+        case "customize":
+          return "チャンネル&ロール";
+        case "browse":
+          return "チャンネル一覧";
+        case "guide":
+          return "サーバーガイド";
+        case "linked-roles":
+          return "連携ロール";
+        default:
+          return match;
+      }
+    });
 
     // [TODO] 画像を省略する
     // [TODO] 動画を省略する
