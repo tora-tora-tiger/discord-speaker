@@ -125,7 +125,13 @@ class _ReadMessages {
       const channel = this.guild.channels.cache.get(channelId);
       return channel ? `${channel.name}` : "不明";
     });
-    // [TODO] 絵文字を省略する
+    // [TODO]ユニコード絵文字を名前に置き換える
+    // これは動かない(emoji-name-mapを使用)
+    // const unicodeEmojiPattern = /[\p{Emoji_Presentation}]/gu;
+    // text = text.replace(unicodeEmojiPattern, (match) => {
+    //   const emojiName = emoji.get(match);
+    //   return emojiName ? emojiName : "絵文字";
+    // });
 
     // カスタム絵文字を名前に置き換える
     const emojiPattern = /<a?:(\w+):[\d-]+>/g;
