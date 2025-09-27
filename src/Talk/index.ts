@@ -78,7 +78,7 @@ export default class Talk {
   private async request(url: URL, option: RequestInit): Promise<Response | undefined> {
     try {
       console.log('[Talk] Requesting:', url.toString(), option);
-      const response = await fetch(url.toString(), option);
+      const response = await fetch(url.toString());
       if (!response.ok) {
         throw new Error('[Talk] Network response was not ok');
       }
