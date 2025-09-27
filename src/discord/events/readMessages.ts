@@ -116,7 +116,7 @@ class _ReadMessages {
     text = text.replace(roleMentionPattern, (match) => {
       const roleId = match.replace(/<@&/, "").replace(">", "");
       const role = this.guild.roles.cache.get(roleId);
-      return role ? `あっと${role.name}` : "ろーるあんのうん";
+      return role ? `あっと${role.name}` : "あんのうんろーる";
     });
     // チャンネルメンションをチャンネル名に置き換える
     const channelMentionPattern = /<#\d+>/;
