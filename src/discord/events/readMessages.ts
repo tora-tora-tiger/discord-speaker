@@ -104,6 +104,9 @@ class _ReadMessages {
     if(text.match(linkPattern)) {
       text = text.replace(linkPattern, "ゆーあーるえる");
     }
+    // @everyone,@hereを置き換える
+    text = text.replace(/@everyone/g, "あっとえぶりわん");
+    text = text.replace(/@here/g, "あっとひあ");
     // @mentionをユーザー名に置き換える
     const mentionPattern = /<@!?\d+>/g;
     text = text.replace(mentionPattern, (match) => {
