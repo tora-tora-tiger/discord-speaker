@@ -100,16 +100,66 @@ class _ReadMessages {
   private fixText(text: string): string {
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
-    const linkPattern = new RegExp(`\\w+://[\\w!?/+\\-_~;.,*&@#$%()'[\\]=]+`);
-    if(text.match(linkPattern)) {
-      text = text.replace(linkPattern, "ゆーあーるえる省略");
-    }
-    // @mentionを省略する
-    const mentionPattern = new RegExp(`<@\\d+>`);
-    if(text.match(mentionPattern)) {
-      text = text.replace(mentionPattern, "めんしょん省略");
-    }
-    // [TODO] 絵文字を省略する
+    const linkPattern = /\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/g;
+    text = text.replace(linkPattern, "ゆーあーるえる");
+
+    // @everyone,@hereを置き換える
+    text = text.replace(/@everyone/g, "あっとえぶりわん");
+    text = text.replace(/@here/g, "あっとひあ");
+
+    // @mentionをユーザー名に置き換える
+    const mentionPattern = /<@!?\d+>/g;
+    text = text.replace(mentionPattern, (match) => {
+      const userId = match.replace(/<@!?/, "").replace(">", "");
+      const member = this.guild.members.cache.get(userId);
+      return member ? `あっと${member.displayName}` : "あっとあんのうん";
+    });
+
+    // ロールメンションをロール名に置き換える
+    const roleMentionPattern = /<@&\d+>/g;
+    text = text.replace(roleMentionPattern, (match) => {
+      const roleId = match.replace(/<@&/, "").replace(">", "");
+      const role = this.guild.roles.cache.get(roleId);
+      return role ? `あっと${role.name}` : "あんのうんろーる";
+    });
+
+    // チャンネルメンションをチャンネル名に置き換える
+    const channelMentionPattern = /<#\d+>/g;
+    text = text.replace(channelMentionPattern, (match) => {
+      const channelId = match.replace(/<#/, "").replace(">", "");
+      const channel = this.guild.channels.cache.get(channelId);
+      return channel ? `${channel.name}` : "不明";
+    });
+    
+    // [TODO]ユニコード絵文字を名前に置き換える
+    // これは動かない(emoji-name-mapを使用)
+    // const unicodeEmojiPattern = /[\p{Emoji_Presentation}]/gu;
+    // text = text.replace(unicodeEmojiPattern, (match) => {
+    //   const emojiName = emoji.get(match);
+    //   return emojiName ? emojiName : "絵文字";
+    // });
+
+    // カスタム絵文字を名前に置き換える
+    const emojiPattern = /<a?:(\w+):[\d-]+>/g;
+    text = text.replace(emojiPattern, "$1");
+
+    // Guild Navigationを置き換え
+    const guildNavigationPattern = /<id:(\d+)>/g;
+    text = text.replace(guildNavigationPattern, (match, p1) => {
+      switch(p1) {
+        case "customize":
+          return "チャンネル&ロール";
+        case "browse":
+          return "チャンネル一覧";
+        case "guide":
+          return "サーバーガイド";
+        case "linked-roles":
+          return "連携ロール";
+        default:
+          return match;
+      }
+    });
+
     // [TODO] 画像を省略する
     // [TODO] 動画を省略する
 
