@@ -100,30 +100,30 @@ class _ReadMessages {
   private fixText(text: string): string {
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
-    const linkPattern = /\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/;
+    const linkPattern = /\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/g;
     if(text.match(linkPattern)) {
       text = text.replace(linkPattern, "ゆーあーるえる");
     }
     // @mentionをユーザー名に置き換える
-    const mentionPattern = /<@!?\d+>/;
+    const mentionPattern = /<@!?\d+>/g;
     text = text.replace(mentionPattern, (match) => {
       const userId = match.replace(/<@!?/, "").replace(">", "");
       const member = this.guild.members.cache.get(userId);
       return member ? `あっと${member.displayName}` : "あっとあんのうん";
     });
     // ロールメンションをロール名に置き換える
-    const roleMentionPattern = /<@&\d+>/;
+    const roleMentionPattern = /<@&\d+>/g;
     text = text.replace(roleMentionPattern, (match) => {
       const roleId = match.replace(/<@&/, "").replace(">", "");
       const role = this.guild.roles.cache.get(roleId);
       return role ? `あっと${role.name}` : "あんのうんろーる";
     });
     // チャンネルメンションをチャンネル名に置き換える
-    const channelMentionPattern = /<#\d+>/;
+    const channelMentionPattern = /<#\d+>/g;
     text = text.replace(channelMentionPattern, (match) => {
       const channelId = match.replace(/<#/, "").replace(">", "");
       const channel = this.guild.channels.cache.get(channelId);
-      return channel ? `#${channel.name}` : "不明";
+      return channel ? `${channel.name}` : "不明";
     });
     // [TODO] 絵文字を省略する
 
@@ -132,7 +132,7 @@ class _ReadMessages {
     text = text.replace(emojiPattern, "$1");
 
     // Guild Navigationを置き換え
-    const guildNavigationPattern = /<id:(\d+)>/;
+    const guildNavigationPattern = /<id:(\d+)>/g;
     text = text.replace(guildNavigationPattern, (match, p1) => {
       switch(p1) {
         case "customize":
