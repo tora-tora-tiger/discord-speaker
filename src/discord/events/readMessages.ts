@@ -101,9 +101,7 @@ class _ReadMessages {
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
     const linkPattern = /\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/g;
-    if(text.match(linkPattern)) {
-      text = text.replace(linkPattern, "ゆーあーるえる");
-    }
+    text = text.replace(linkPattern, "ゆーあーるえる");
     // @everyone,@hereを置き換える
     text = text.replace(/@everyone/g, "あっとえぶりわん");
     text = text.replace(/@here/g, "あっとひあ");
