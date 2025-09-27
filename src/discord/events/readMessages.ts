@@ -102,9 +102,11 @@ class _ReadMessages {
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
     const linkPattern = /\w+:\/\/[\w!?/+\\-_~;.,*&@#$%()'[\]=]+/g;
     text = text.replace(linkPattern, "ゆーあーるえる");
+
     // @everyone,@hereを置き換える
     text = text.replace(/@everyone/g, "あっとえぶりわん");
     text = text.replace(/@here/g, "あっとひあ");
+
     // @mentionをユーザー名に置き換える
     const mentionPattern = /<@!?\d+>/g;
     text = text.replace(mentionPattern, (match) => {
@@ -112,6 +114,7 @@ class _ReadMessages {
       const member = this.guild.members.cache.get(userId);
       return member ? `あっと${member.displayName}` : "あっとあんのうん";
     });
+
     // ロールメンションをロール名に置き換える
     const roleMentionPattern = /<@&\d+>/g;
     text = text.replace(roleMentionPattern, (match) => {
@@ -119,6 +122,7 @@ class _ReadMessages {
       const role = this.guild.roles.cache.get(roleId);
       return role ? `あっと${role.name}` : "あんのうんろーる";
     });
+
     // チャンネルメンションをチャンネル名に置き換える
     const channelMentionPattern = /<#\d+>/g;
     text = text.replace(channelMentionPattern, (match) => {
@@ -126,6 +130,7 @@ class _ReadMessages {
       const channel = this.guild.channels.cache.get(channelId);
       return channel ? `${channel.name}` : "不明";
     });
+    
     // [TODO]ユニコード絵文字を名前に置き換える
     // これは動かない(emoji-name-mapを使用)
     // const unicodeEmojiPattern = /[\p{Emoji_Presentation}]/gu;
