@@ -126,6 +126,11 @@ class _ReadMessages {
       return channel ? `#${channel.name}` : match;
     });
     // [TODO] 絵文字を省略する
+
+    // カスタム絵文字を名前に置き換える
+    const emojiPattern = /<a?:(\w+):\d+>/g;
+    text = text.replace(emojiPattern, "$1");
+
     // [TODO] 画像を省略する
     // [TODO] 動画を省略する
 
