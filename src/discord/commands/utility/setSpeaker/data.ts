@@ -9,4 +9,4 @@ const data = new SlashCommandBuilder()
       .setRequired(true)
   );
 
-export default { data };
+export default data;

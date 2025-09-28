@@ -57,10 +57,13 @@ async function collectDataCommands(): Promise<Command[]> {
     "commands/utility",
     "data.ts",
     async (filePath) => {
-      const command = (await import(pathToFileURL(filePath).href)).default;
-      if (command.data) {
-        commands.push(command);
-        console.log("[discord] set command: ", command.data.name);
+      const data = (await import(pathToFileURL(filePath).href)).default;
+      if (data) {
+        commands.push({
+          data: data,
+          execute: async () => {} // デプロイ用のダミー関数
+        });
+        console.log("[discord] set command: ", data.name);
       } else {
         console.log(`[discord/collectCommands][WARNING] The command at ${filePath} is missing a required "data" property.`);
       }

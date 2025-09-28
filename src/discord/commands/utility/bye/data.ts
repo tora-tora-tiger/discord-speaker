@@ -4,4 +4,4 @@ const data = new SlashCommandBuilder()
   .setName('bye')
   .setDescription('Disconnect from the voice channel');
 
-export default { data };
+export default data;
