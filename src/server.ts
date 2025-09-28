@@ -8,7 +8,6 @@ const talk = new Talk({
 export default talk;
 
 const discord = new Discord();
-discord.deployCommands();
 discord.start()
 
 process.on("SIGINT", async () => {
