@@ -8,11 +8,14 @@ const talk = new Talk({
 export default talk;
 
 const discord = new Discord();
-discord.deployCommands();
 discord.start()
 
-process.on("SIGINT", async () => {
-  console.log("[main] SIGINT received. Exiting...");
+const gracefulShutdown = async (signal: string) => {
+  console.log(`[main] ${signal} received. Exiting...`);
   await discord.close();
   process.exit(0);
+};
+
+["SIGINT", "SIGTERM"].forEach((signal) => {
+  process.on(signal, () => gracefulShutdown(signal));
 });
