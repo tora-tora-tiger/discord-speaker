@@ -29,6 +29,7 @@ class _ReadMessages {
   private player;
   private audioResourceQueue;
   private guild: Guild;
+  private textLengthLimit = 100;
 
   constructor(message: OmitPartialGroupDMChannel<Message>) {
     if (!message.guild || !message.guildId) {
@@ -162,6 +163,11 @@ class _ReadMessages {
 
     // [TODO] 画像を省略する
     // [TODO] 動画を省略する
+
+    // 100文字以上は省略する
+    if (text.length > this.textLengthLimit) {
+      text = text.slice(0, this.textLengthLimit) + "…";
+    }
 
     console.log("[discord] fixed text:", text);
     return text;
