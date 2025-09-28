@@ -145,7 +145,7 @@ class _ReadMessages {
     text = text.replace(emojiPattern, "$1");
 
     // Guild Navigationを置き換え
-    const guildNavigationPattern = /<id:(\d+)>/g;
+    const guildNavigationPattern = /<id:(customize|browse|guide|linked-roles)>/g;
     text = text.replace(guildNavigationPattern, (match, p1) => {
       switch(p1) {
         case "customize":
