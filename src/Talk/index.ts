@@ -34,7 +34,7 @@ export default class Talk {
     port: '50080'
   }, options: TalkOptions = {
     speaker: '1',
-    speedScale: '1',
+    speedScale: '1.3',
     pitchScale: '0',
     intonationScale: '1',
     volumeScale: '1',
