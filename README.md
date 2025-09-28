@@ -17,8 +17,7 @@ CLIENT_ID=
 ```
 $ git clone https://github.com/tora-tora-tiger/discord-speaker.git
 $ cd discord-speaker
-$ pnpm install
-$ pnpm run start
+$ docker compose --profile voicevox up -d
 ```
 voicevoxで音声を生成するためのapiサーバーをDockerを使用し起動
 
