@@ -45,23 +45,6 @@ export class GuildSpeakerManager {
     this.guildData.delete(guildId);
   }
 
-  // 互換性のためのgetter（既存コードを壊さないように）
-  getMonitorChannel(): Map<Snowflake, Snowflake> {
-    const map = new Map<Snowflake, Snowflake>();
-    for (const [guildId, data] of this.guildData) {
-      map.set(guildId, data.channelId);
-    }
-    return map;
-  }
-
-  getGuildList(): Map<Snowflake, ReadMessages> {
-    const map = new Map<Snowflake, ReadMessages>();
-    for (const [guildId, data] of this.guildData) {
-      map.set(guildId, data.readMessages);
-    }
-    return map;
-  }
-
   // チャンネルIDを取得
   getChannelId(guildId: Snowflake): Snowflake | undefined {
     return this.guildData.get(guildId)?.channelId;
