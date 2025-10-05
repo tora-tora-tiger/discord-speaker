@@ -12,7 +12,7 @@ if (!token) {
 }
 
 export const guildSpeakerManager = GuildSpeakerManager.getInstance();
-export const monitorChannel = guildSpeakerManager.getMonitorChannel();
+// export const monitorChannel = guildSpeakerManager.getMonitorChannel();
 export default class Discord {
   
   private client: Client;

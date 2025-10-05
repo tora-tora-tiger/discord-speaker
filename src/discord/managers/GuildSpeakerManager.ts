@@ -21,14 +21,12 @@ export class GuildSpeakerManager {
   }
 
   // サーバーをチャンネル購読・更新
-  subscribe(guildId: Snowflake, channelId: Snowflake, guild: Guild): ReadMessages {
+  subscribe(guild: Guild, channelId: Snowflake): ReadMessages {
+    const guildId = guild.id;
     const existingData = this.guildData.get(guildId);
 
     if (!existingData) {
       // 新規の場合
-      if (!guild) {
-        throw new Error("Guild is required for new guild");
-      }
       const newData = {
         channelId,
         readMessages: new ReadMessages(guild)

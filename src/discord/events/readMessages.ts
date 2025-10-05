@@ -11,7 +11,7 @@ async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
   const channelId = guildSpeakerManager.getChannelId(message.guild.id);
   if (!channelId) return;
 
-  const speaker = guildSpeakerManager.subscribe(message.guildId, channelId, message.guild);
+  const speaker = guildSpeakerManager.subscribe(message.guild, channelId);
   speaker.speak(message);
 }
 

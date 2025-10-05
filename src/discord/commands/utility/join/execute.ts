@@ -19,7 +19,7 @@ async function execute(interaction: CommandInteraction) {
     adapterCreator: interaction.guild.voiceAdapterCreator,
   });
 
-  guildSpeakerManager.subscribe(interaction.guild.id, interaction.channelId);
+  guildSpeakerManager.subscribe(interaction.guild, interaction.channelId);
   console.log("[discord] registered text channel: ", interaction.channelId);
   interaction.reply(`Joined ${voiceState.channel.name}`)
 }
