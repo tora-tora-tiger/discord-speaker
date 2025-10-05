@@ -5,12 +5,12 @@ import * as os from 'os';
 import * as path from 'path';
 
 type TalkOptions = {
-  speaker: string;
-  speedScale: string;
-  pitchScale: string;
-  intonationScale: string;
-  volumeScale: string;
-  kana: boolean;
+  speaker?: string;
+  speedScale?: string;
+  pitchScale?: string;
+  intonationScale?: string;
+  volumeScale?: string;
+  kana?: boolean;
 };
 
 type Params = {
@@ -29,25 +29,15 @@ export default class Talk {
   volumeScale: string;
   kana: boolean;
 
-  constructor(params: Params = {
-    host: 'localhost',
-    port: '50080'
-  }, options: TalkOptions = {
-    speaker: '1',
-    speedScale: '1.3',
-    pitchScale: '0',
-    intonationScale: '1',
-    volumeScale: '1',
-    kana: false
-  }) {
-    this.host   = params.host
-    this.port   = params.port;
-    this.speaker  = options.speaker;
-    this.speedScale  = options.speedScale;
-    this.pitchScale  = options.pitchScale;
-    this.intonationScale = options.intonationScale;
-    this.volumeScale = options.volumeScale;
-    this.kana = options.kana;
+  constructor(params: Params, options: TalkOptions) {
+    this.host   = params?.host ?? 'localhost';
+    this.port   = params?.port ?? '50080';
+    this.speaker  = options?.speaker ?? '1';
+    this.speedScale  = options?.speedScale ?? '1.3';
+    this.pitchScale  = options?.pitchScale ?? '0';
+    this.intonationScale = options?.intonationScale ?? '1';
+    this.volumeScale = options?.volumeScale ?? '1';
+    this.kana = options?.kana ?? false;
   }
 
   setHost(host: string): void {
@@ -92,15 +82,17 @@ export default class Talk {
   // voicboxを利用
   async voiceboxTalk(
     text: string,
-    options: TalkOptions = {
-      speaker: this.speaker,
-      volumeScale: this.volumeScale,
-      speedScale: this.speedScale,
-      pitchScale: this.pitchScale,
-      intonationScale: this.intonationScale,
-      kana: this.kana
-    } 
+    options: TalkOptions = {}
   ): Promise<ArrayBuffer | undefined> {
+    // デフォルト値を設定
+    const finalOptions: Required<TalkOptions> = {
+      speaker: options.speaker ?? this.speaker,
+      volumeScale: options.volumeScale ?? this.volumeScale,
+      speedScale: options.speedScale ?? this.speedScale,
+      pitchScale: options.pitchScale ?? this.pitchScale,
+      intonationScale: options.intonationScale ?? this.intonationScale,
+      kana: options.kana ?? this.kana
+    };
     // クエリ生成
     const query: {
       text: string;
@@ -108,7 +100,7 @@ export default class Talk {
       core_version?: string;
     } = {
       text: text,
-      speaker: options.speaker
+      speaker: finalOptions.speaker
     }
 
     const query_url = new URL(`http://${this.host}:${this.port}/audio_query`);
@@ -124,12 +116,12 @@ export default class Talk {
     const query_json = await query_response.json();
 
     // クエリのパラメータを設定
-    query_json.speaker = options.speaker;
-    query_json.speedScale = options.speedScale;
-    query_json.pitchScale = options.pitchScale;
-    query_json.intonationScale = options.intonationScale;
-    query_json.volumeScale = options.volumeScale;
-    query_json.kana = options.kana.toString();
+    query_json.speaker = finalOptions.speaker;
+    query_json.speedScale = finalOptions.speedScale;
+    query_json.pitchScale = finalOptions.pitchScale;
+    query_json.intonationScale = finalOptions.intonationScale;
+    query_json.volumeScale = finalOptions.volumeScale;
+    query_json.kana = finalOptions.kana.toString();
     
     // console.log('[Talk] query_json:', query_json);
     

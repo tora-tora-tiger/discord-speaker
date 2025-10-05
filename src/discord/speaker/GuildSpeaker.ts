@@ -1,7 +1,8 @@
-import { Message, OmitPartialGroupDMChannel, Guild } from "discord.js";
+import { Message, OmitPartialGroupDMChannel, Guild, Snowflake } from "discord.js";
 import { AudioPlayer, AudioPlayerStatus, AudioResource, createAudioResource, getVoiceConnection, StreamType } from "@discordjs/voice";
 import { Readable } from "stream";
 import talk from "@/server";
+import GuildSpeakerManager from "./GuildSpeakerManager";
 
 // 各ギルドごとに読み上げを管理するクラス
 // [TODO] Talkクラスもギルドごとに分ける
@@ -9,10 +10,14 @@ export default class GuildSpeaker {
   private player;
   private audioResourceQueue;
   private guild: Guild;
+  private manager: GuildSpeakerManager;
   private textLengthLimit = 100;
+  private userSpeakers = new Map<Snowflake, string>(); // ユーザーID → 話者ID
+  private serverSpeaker?: string; // サーバーのデフォルト話者
 
-  constructor(guild: Guild) {
+  constructor(guild: Guild, manager: GuildSpeakerManager) {
     this.guild = guild;
+    this.manager = manager;
 
     this.player = new AudioPlayer();
     this.audioResourceQueue = new Array<AudioResource>();
@@ -31,9 +36,38 @@ export default class GuildSpeaker {
   }
 
 
+  // ユーザーの話者を設定
+  setUserSpeaker(userId: Snowflake, speaker: string): void {
+    this.userSpeakers.set(userId, speaker);
+  }
+
+  // サーバーの話者を設定
+  setServerSpeaker(speaker: string): void {
+    this.serverSpeaker = speaker;
+  }
+
+  // ユーザーに応じた話者を取得（優先順位: 個人設定 > サーバー設定 > グローバルデフォルト）
+  getSpeakerForUser(userId: Snowflake): string {
+    // 個人設定があればそれを使用
+    if (this.userSpeakers.has(userId)) {
+      return this.userSpeakers.get(userId)!;
+    }
+    // サーバー設定があればそれを使用
+    if (this.serverSpeaker) {
+      return this.serverSpeaker;
+    }
+    // グローバルデフォルトを使用
+    return talk.speaker;
+  }
+
   async speak(message: OmitPartialGroupDMChannel<Message>) {
     if (!message.guild || !message.guildId) return;
     if (message.author.bot) return;
+
+    // 読まないメッセージは無視
+    const channelId = this.manager.getChannelId(this.guild.id);
+    if (message.channelId !== channelId) return;
+
 
     console.log(`[discord/${this.guild.name}] received message:`, message.content);
 
@@ -50,7 +84,8 @@ export default class GuildSpeaker {
     }
 
     // 音声バイナリ取得し，discord.jsのAudioResourceに変換
-    const voice = await talk.voiceboxTalk(this.fixText(message.content));
+    const speaker = this.getSpeakerForUser(message.author.id);
+    const voice = await talk.voiceboxTalk(this.fixText(message.content), { speaker });
     if(!voice) {
       console.error(`[discord${this.guild.id}] Failed to get message voice`);
       // message.reply("音声合成に失敗しました"); 権限足りなくて返信できない
