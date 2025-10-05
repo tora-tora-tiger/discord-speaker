@@ -1,31 +1,23 @@
 import { Message, OmitPartialGroupDMChannel, Guild } from "discord.js";
-import { monitorChannel } from "@/discord";
+import GuildSpeakerManager from "@/discord/managers/GuildSpeakerManager";
 import { AudioPlayer, AudioPlayerStatus, AudioResource, createAudioResource, getVoiceConnection, StreamType } from "@discordjs/voice";
 import { Readable } from "stream";
 import talk from "@/server";
 
-const guildList = new Map<string, _ReadMessages>();
+const guildSpeakerManager = GuildSpeakerManager.getInstance();
 
 async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
   if (!message.guild || !message.guildId) return;
-  const channelId = monitorChannel.get(message.guild.id);
+  const channelId = guildSpeakerManager.getChannelId(message.guild.id);
   if (!channelId) return;
-  
-  if(guildList.has(message.guildId)) {
-    const guild = guildList.get(message.guildId);
-    if(guild) {
-      guild.speak(message);
-    }
-  } else {
-    const speaker = new _ReadMessages(message);
-    guildList.set(message.guildId, speaker);
-    speaker.speak(message);
-  }
+
+  const speaker = guildSpeakerManager.addGuild(message.guildId, channelId, message);
+  speaker.speak(message);
 }
 
 // 各ギルドごとに読み上げを管理するクラス
 // [TODO] Talkクラスもギルドごとに分ける
-class _ReadMessages {
+export class ReadMessages {
   private player;
   private audioResourceQueue;
   private guild: Guild;
@@ -56,7 +48,7 @@ class _ReadMessages {
 
   async speak(message: OmitPartialGroupDMChannel<Message>) {
     if (!message.guild || !message.guildId) return;
-    const channelId = monitorChannel.get(message.guild.id);
+    const channelId = guildSpeakerManager.getChannelId(message.guild.id);
     // 読まないメッセージは無視
     if (message.channelId !== channelId) return;
     if (message.author.bot) return;

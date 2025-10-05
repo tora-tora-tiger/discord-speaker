@@ -3,6 +3,7 @@ import { collectCommands } from '@/discord/collectFiles';
 import executeCommands from '@/discord/events/executeCommands';
 import readMessages from '@/discord/events/readMessages';
 import deploy from './deploy';
+import GuildSpeakerManager from './managers/GuildSpeakerManager';
 
 const token = process.env.DISCORD_TOKEN ?? '';
 
@@ -10,7 +11,8 @@ if (!token) {
   throw new Error('DISCORD_TOKEN is not defined in environment variables.');
 }
 
-export const monitorChannel = new Map<Snowflake, Snowflake>();
+export const guildSpeakerManager = GuildSpeakerManager.getInstance();
+export const monitorChannel = guildSpeakerManager.getMonitorChannel();
 export default class Discord {
   
   private client: Client;

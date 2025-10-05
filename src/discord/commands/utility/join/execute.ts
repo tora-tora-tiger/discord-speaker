@@ -1,6 +1,6 @@
 import { CommandInteraction, GuildMember } from "discord.js"
 import { joinVoiceChannel } from "@discordjs/voice";
-import { monitorChannel } from "@/discord";
+import { guildSpeakerManager } from "@/discord";
 
 async function execute(interaction: CommandInteraction) {
   if(!interaction.member) return;
@@ -19,7 +19,7 @@ async function execute(interaction: CommandInteraction) {
     adapterCreator: interaction.guild.voiceAdapterCreator,
   });
 
-  monitorChannel.set(interaction.guild.id, interaction.channelId);
+  guildSpeakerManager.addGuild(interaction.guild.id, interaction.channelId);
   console.log("[discord] registered text channel: ", interaction.channelId);
   interaction.reply(`Joined ${voiceState.channel.name}`)
 }
