@@ -3,7 +3,7 @@ import { collectCommands } from '@/discord/collectFiles';
 import executeCommands from '@/discord/events/executeCommands';
 import readMessages from '@/discord/events/readMessages';
 import deploy from './deploy';
-import GuildSpeakerManager from './managers/GuildSpeakerManager';
+import GuildSpeakerManager from './speaker/GuildSpeakerManager';
 
 const token = process.env.DISCORD_TOKEN ?? '';
 
