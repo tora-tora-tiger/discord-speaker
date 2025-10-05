@@ -1,5 +1,5 @@
 import { Snowflake, Guild } from "discord.js";
-import { GuildSpeaker } from "@/discord/events/readMessages";
+import GuildSpeaker from "@/discord/managers/GuildSpeaker";
 
 interface GuildData {
   channelId: Snowflake;
