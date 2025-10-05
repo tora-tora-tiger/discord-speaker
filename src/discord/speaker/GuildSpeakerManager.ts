@@ -27,12 +27,13 @@ export class GuildSpeakerManager {
 
     if (!existingData) {
       // 新規の場合
+      const guildSpeaker = new GuildSpeaker(guild, this);
       const newData = {
         channelId,
-        guildSpeaker: new GuildSpeaker(guild)
+        guildSpeaker
       };
       this.guildData.set(guildId, newData);
-      return newData.guildSpeaker;
+      return guildSpeaker;
     } else {
       // 既存の場合はチャンネルIDのみ更新
       existingData.channelId = channelId;

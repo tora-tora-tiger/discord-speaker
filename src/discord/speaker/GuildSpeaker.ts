@@ -2,6 +2,7 @@ import { Message, OmitPartialGroupDMChannel, Guild, Snowflake } from "discord.js
 import { AudioPlayer, AudioPlayerStatus, AudioResource, createAudioResource, getVoiceConnection, StreamType } from "@discordjs/voice";
 import { Readable } from "stream";
 import talk from "@/server";
+import GuildSpeakerManager from "./GuildSpeakerManager";
 
 // 各ギルドごとに読み上げを管理するクラス
 // [TODO] Talkクラスもギルドごとに分ける
@@ -9,12 +10,14 @@ export default class GuildSpeaker {
   private player;
   private audioResourceQueue;
   private guild: Guild;
+  private manager: GuildSpeakerManager;
   private textLengthLimit = 100;
   private userSpeakers = new Map<Snowflake, string>(); // ユーザーID → 話者ID
   private serverSpeaker?: string; // サーバーのデフォルト話者
 
-  constructor(guild: Guild) {
+  constructor(guild: Guild, manager: GuildSpeakerManager) {
     this.guild = guild;
+    this.manager = manager;
 
     this.player = new AudioPlayer();
     this.audioResourceQueue = new Array<AudioResource>();
@@ -60,6 +63,11 @@ export default class GuildSpeaker {
   async speak(message: OmitPartialGroupDMChannel<Message>) {
     if (!message.guild || !message.guildId) return;
     if (message.author.bot) return;
+
+    // 読まないメッセージは無視
+    const channelId = this.manager.getChannelId(this.guild.id);
+    if (message.channelId !== channelId) return;
+
 
     console.log(`[discord/${this.guild.name}] received message:`, message.content);
 
