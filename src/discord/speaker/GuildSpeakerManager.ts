@@ -3,7 +3,7 @@ import GuildSpeaker from "@/discord/speaker/GuildSpeaker";
 
 interface GuildData {
   channelId: Snowflake;
-  readMessages: GuildSpeaker;
+  guildSpeaker: GuildSpeaker;
 }
 
 export class GuildSpeakerManager {
@@ -29,14 +29,14 @@ export class GuildSpeakerManager {
       // 新規の場合
       const newData = {
         channelId,
-        readMessages: new GuildSpeaker(guild)
+        guildSpeaker: new GuildSpeaker(guild)
       };
       this.guildData.set(guildId, newData);
-      return newData.readMessages;
+      return newData.guildSpeaker;
     } else {
       // 既存の場合はチャンネルIDのみ更新
       existingData.channelId = channelId;
-      return existingData.readMessages;
+      return existingData.guildSpeaker;
     }
   }
 
@@ -52,7 +52,7 @@ export class GuildSpeakerManager {
 
   // ReadMessagesインスタンスを取得
   getReadMessages(guildId: Snowflake): GuildSpeaker | undefined {
-    return this.guildData.get(guildId)?.readMessages;
+    return this.guildData.get(guildId)?.guildSpeaker;
   }
 
   // ギルドが存在するか確認
