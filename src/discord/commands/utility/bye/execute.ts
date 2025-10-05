@@ -7,7 +7,7 @@ const execute = async function(interaction: CommandInteraction) {
   const connection = getVoiceConnection(interaction.guild.id);
   if(connection) {
     connection.destroy();
-    guildSpeakerManager.removeGuild(interaction.guild.id);
+    guildSpeakerManager.unsubscribe(interaction.guild.id);
     await interaction.reply("Disconnected from the voice channel.");
     return;
   }

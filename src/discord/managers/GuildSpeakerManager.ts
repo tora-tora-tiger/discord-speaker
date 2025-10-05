@@ -20,8 +20,8 @@ export class GuildSpeakerManager {
     return GuildSpeakerManager.instance;
   }
 
-  // サーバーを追加・更新
-  addGuild(guildId: Snowflake, channelId: Snowflake, guild?: Guild): ReadMessages {
+  // サーバーをチャンネル購読・更新
+  subscribe(guildId: Snowflake, channelId: Snowflake, guild?: Guild): ReadMessages {
     const existingData = this.guildData.get(guildId);
 
     if (!existingData) {
@@ -42,8 +42,8 @@ export class GuildSpeakerManager {
     }
   }
 
-  // サーバーを削除（byeコマンド用）
-  removeGuild(guildId: Snowflake) {
+  // サーバーのチャンネル購読解除（byeコマンド用）
+  unsubscribe(guildId: Snowflake) {
     this.guildData.delete(guildId);
   }
 
