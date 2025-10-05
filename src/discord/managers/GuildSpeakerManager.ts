@@ -21,7 +21,7 @@ export class GuildSpeakerManager {
   }
 
   // サーバーをチャンネル購読・更新
-  subscribe(guildId: Snowflake, channelId: Snowflake, guild?: Guild): ReadMessages {
+  subscribe(guildId: Snowflake, channelId: Snowflake, guild: Guild): ReadMessages {
     const existingData = this.guildData.get(guildId);
 
     if (!existingData) {
