@@ -1,4 +1,4 @@
-import { Message, OmitPartialGroupDMChannel, Snowflake } from "discord.js";
+import { Snowflake, Guild } from "discord.js";
 import { ReadMessages } from "@/discord/events/readMessages";
 
 interface GuildData {
@@ -12,6 +12,7 @@ export class GuildSpeakerManager {
 
   private constructor() {}
 
+  // グローバルのインスタンスを1にするためのシングルトンパターン
   public static getInstance(): GuildSpeakerManager {
     if (!GuildSpeakerManager.instance) {
       GuildSpeakerManager.instance = new GuildSpeakerManager();
@@ -20,17 +21,17 @@ export class GuildSpeakerManager {
   }
 
   // サーバーを追加・更新
-  addGuild(guildId: Snowflake, channelId: Snowflake, message?: OmitPartialGroupDMChannel<Message>): ReadMessages {
+  addGuild(guildId: Snowflake, channelId: Snowflake, guild?: Guild): ReadMessages {
     const existingData = this.guildData.get(guildId);
 
     if (!existingData) {
       // 新規の場合
-      if (!message) {
-        throw new Error("Message is required for new guild");
+      if (!guild) {
+        throw new Error("Guild is required for new guild");
       }
       const newData = {
         channelId,
-        readMessages: new ReadMessages(message)
+        readMessages: new ReadMessages(guild)
       };
       this.guildData.set(guildId, newData);
       return newData.readMessages;

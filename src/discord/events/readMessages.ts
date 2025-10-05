@@ -11,7 +11,7 @@ async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
   const channelId = guildSpeakerManager.getChannelId(message.guild.id);
   if (!channelId) return;
 
-  const speaker = guildSpeakerManager.addGuild(message.guildId, channelId, message);
+  const speaker = guildSpeakerManager.addGuild(message.guildId, channelId, message.guild);
   speaker.speak(message);
 }
 
@@ -23,11 +23,8 @@ export class ReadMessages {
   private guild: Guild;
   private textLengthLimit = 100;
 
-  constructor(message: OmitPartialGroupDMChannel<Message>) {
-    if (!message.guild || !message.guildId) {
-      throw new Error("[discord/ReadMessages] Guild not found");
-    }
-    this.guild = message.guild;
+  constructor(guild: Guild) {
+    this.guild = guild;
 
     this.player = new AudioPlayer();
     this.audioResourceQueue = new Array<AudioResource>();
