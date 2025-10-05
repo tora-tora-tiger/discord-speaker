@@ -1,9 +1,9 @@
 import { Snowflake, Guild } from "discord.js";
-import { ReadMessages } from "@/discord/events/readMessages";
+import { GuildSpeaker } from "@/discord/events/readMessages";
 
 interface GuildData {
   channelId: Snowflake;
-  readMessages: ReadMessages;
+  readMessages: GuildSpeaker;
 }
 
 export class GuildSpeakerManager {
@@ -21,7 +21,7 @@ export class GuildSpeakerManager {
   }
 
   // サーバーをチャンネル購読・更新
-  subscribe(guild: Guild, channelId: Snowflake): ReadMessages {
+  subscribe(guild: Guild, channelId: Snowflake): GuildSpeaker {
     const guildId = guild.id;
     const existingData = this.guildData.get(guildId);
 
@@ -29,7 +29,7 @@ export class GuildSpeakerManager {
       // 新規の場合
       const newData = {
         channelId,
-        readMessages: new ReadMessages(guild)
+        readMessages: new GuildSpeaker(guild)
       };
       this.guildData.set(guildId, newData);
       return newData.readMessages;
@@ -51,7 +51,7 @@ export class GuildSpeakerManager {
   }
 
   // ReadMessagesインスタンスを取得
-  getReadMessages(guildId: Snowflake): ReadMessages | undefined {
+  getReadMessages(guildId: Snowflake): GuildSpeaker | undefined {
     return this.guildData.get(guildId)?.readMessages;
   }
 

@@ -17,7 +17,7 @@ async function readMessages(message: OmitPartialGroupDMChannel<Message>) {
 
 // 各ギルドごとに読み上げを管理するクラス
 // [TODO] Talkクラスもギルドごとに分ける
-export class ReadMessages {
+export class GuildSpeaker {
   private player;
   private audioResourceQueue;
   private guild: Guild;
