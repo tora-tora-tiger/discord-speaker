@@ -19,15 +19,3 @@ $ git clone https://github.com/tora-tora-tiger/discord-speaker.git
 $ cd discord-speaker
 $ docker compose --profile voicevox up -d
 ```
-voicevoxで音声を生成するためのapiサーバーをDockerを使用し起動
-
-CPU
-```
-$ docker pull voicevox/voicevox_engine:cpu-ubuntu20.04-latest
-$ docker run --rm -it -p '127.0.0.1:50021:50021' voicevox/voicevox_engine:cpu-latest
-```
-GPU
-```
-$ docker pull voicevox/voicevox_engine:nvidia-ubuntu20.04-latest
-$ docker run --rm --gpus all -p '127.0.0.1:50021:50021' voicevox/voicevox_engine:nvidia-ubuntu20.04-latest
-```
