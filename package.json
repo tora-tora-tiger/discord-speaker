@@ -8,7 +8,7 @@
     "start": "node build/server.js",
     "start:nobuild": "tsx src/server.ts",
     "dev": "tsx -r dotenv/config src/server.ts",
-    "commands-deploy": "tsx -r dotenv/config src/deploy.ts"
+    "deploy-commands": "tsx -r dotenv/config src/deploy.ts"
   },
   "keywords": [],
   "author": "",
