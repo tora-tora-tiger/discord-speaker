@@ -2,6 +2,7 @@ import { Client, Events, GatewayIntentBits, Collection } from 'discord.js';
 import { collectCommands } from '@/discord/collectFiles';
 import executeCommands from '@/discord/events/executeCommands';
 import readMessages from '@/discord/events/readMessages';
+import onVoiceStateUpdate from '@/discord/events/onVoiceStateUpdate';
 import deploy from './deploy';
 import GuildSpeakerManager from './speaker/GuildSpeakerManager';
 
@@ -54,7 +55,10 @@ export default class Discord {
     this.client.on(Events.InteractionCreate, executeCommands);
 
     // メッセージの読み上げ
-    this.client.on(Events.MessageCreate, readMessages)
+    this.client.on(Events.MessageCreate, readMessages);
+
+    // VC
+    this.client.on(Events.VoiceStateUpdate, onVoiceStateUpdate);
     
     this.client.login(token);
   };
