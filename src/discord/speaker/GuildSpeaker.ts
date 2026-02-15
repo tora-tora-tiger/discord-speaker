@@ -107,6 +107,15 @@ export default class GuildSpeaker {
     }
   }
 
+  // 現在再生中の読み上げをスキップする
+  skipCurrent(): boolean {
+    if (this.player.state.status === AudioPlayerStatus.Idle) {
+      return false;
+    }
+
+    return this.player.stop(true);
+  }
+
   private fixText(text: string): string {
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
