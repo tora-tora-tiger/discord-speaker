@@ -108,6 +108,11 @@ export default class GuildSpeaker {
   }
 
   private fixText(text: string): string {
+    // コードブロック（```で始まるメッセージ）
+    if (/^\s*```/.test(text)) {
+      text = "こーどぶろっく";
+    }
+
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
     const linkPattern = /\w+:\/\/[\w!?/+\\\-_~;.,*&@#$%()'[\]=]+/g;
