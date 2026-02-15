@@ -30,8 +30,7 @@ export function parseSimpleSingScore(text: string): SimpleSingScore | undefined 
   const noteFrameLength = bpmToFrameLength(bpm);
   const items = lines
     .slice(1)
-    .join(" ")
-    .split(",")
+    .flatMap((line) => line.split(/[,，、]/))
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
   if (items.length === 0) {
@@ -40,13 +39,13 @@ export function parseSimpleSingScore(text: string): SimpleSingScore | undefined 
 
   const notes: SimpleSingNote[] = [{ key: null, frame_length: SING_PADDING_FRAME_LENGTH, lyric: "" }];
   for (const item of items) {
-    const parts = item.split(/\s+/).filter(Boolean);
-    if (parts.length < 1 || parts.length > 2) {
+    const parsed = parseScoreItem(item);
+    if (!parsed) {
       return undefined;
     }
 
-    const noteToken = parts[0];
-    const lyricToken = parts[1] ?? "";
+    const noteToken = parsed.noteToken;
+    const lyricToken = parsed.lyricToken;
     const key = noteTokenToMidi(noteToken);
     if (key === undefined) {
       return undefined;
@@ -81,6 +80,32 @@ export function parseSimpleSingScore(text: string): SimpleSingScore | undefined 
 
   notes.push({ key: null, frame_length: SING_PADDING_FRAME_LENGTH, lyric: "" });
   return { notes };
+}
+
+function parseScoreItem(item: string): { noteToken: string; lyricToken: string } | undefined {
+  const parts = item.split(/\s+/).filter(Boolean);
+  if (parts.length < 1 || parts.length > 2) {
+    return undefined;
+  }
+
+  const noteToken = parts[0];
+  if (/^(R|REST|-)$/i.test(noteToken)) {
+    // 休符は歌詞不要
+    if (parts.length !== 1) {
+      return undefined;
+    }
+    return { noteToken, lyricToken: "" };
+  }
+
+  // 通常ノートは「音名 + 空白 + 歌詞」を必須にする
+  if (parts.length !== 2) {
+    return undefined;
+  }
+  const lyricToken = parts[1];
+  if (lyricToken.length === 0) {
+    return undefined;
+  }
+  return { noteToken, lyricToken };
 }
 
 function splitLyricToUnits(lyric: string): string[] {
