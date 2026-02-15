@@ -14,6 +14,8 @@ export default class GuildSpeaker {
   private textLengthLimit = 100;
   private userSpeakers = new Map<Snowflake, string>(); // ユーザーID → 話者ID
   private serverSpeaker?: string; // サーバーのデフォルト話者
+  private lastErrorNotifyAt = 0;
+  private readonly errorNotifyCooldownMs = 15000;
 
   constructor(guild: Guild, manager: GuildSpeakerManager) {
     this.guild = guild;
@@ -91,7 +93,8 @@ export default class GuildSpeaker {
     const voice = await talk.voiceboxTalk(inputText, { speaker });
     if(!voice) {
       console.error(`[discord${this.guild.id}] Failed to get message voice`);
-      // message.reply("音声合成に失敗しました"); 権限足りなくて返信できない
+      const reason = talk.getLastErrorMessage() ?? "音声合成に失敗しました。";
+      await this.notifySpeakFailure(message, reason);
       return;
     }
     const stream = new Readable();
@@ -183,5 +186,29 @@ export default class GuildSpeaker {
 
     console.log("[discord] fixed text:", text);
     return text;
+  }
+
+  private async notifySpeakFailure(
+    message: OmitPartialGroupDMChannel<Message>,
+    reason: string
+  ): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastErrorNotifyAt < this.errorNotifyCooldownMs) {
+      return;
+    }
+    this.lastErrorNotifyAt = now;
+
+    if (!message.channel.isTextBased()) {
+      return;
+    }
+
+    try {
+      await message.channel.send({
+        content: `読み上げに失敗しました: ${reason}`,
+        allowedMentions: { parse: [] }
+      });
+    } catch (error) {
+      console.error(`[discord/${this.guild.name}] Failed to notify speak error:`, error);
+    }
   }
 }

@@ -53,15 +53,68 @@ export function parseSimpleSingScore(text: string): SimpleSingScore | undefined 
       return undefined;
     }
 
-    notes.push({
-      key,
-      frame_length: noteFrameLength,
-      lyric: key === null ? "" : lyricToken
-    });
+    if (key === null) {
+      notes.push({
+        key: null,
+        frame_length: noteFrameLength,
+        lyric: ""
+      });
+      continue;
+    }
+
+    const lyricUnits = splitLyricToUnits(lyricToken);
+    if (lyricUnits.length === 0) {
+      return undefined;
+    }
+
+    const distributedLengths = distributeFrameLength(noteFrameLength, lyricUnits.length);
+    for (let i = 0; i < lyricUnits.length; i += 1) {
+      notes.push({
+        key,
+        frame_length: distributedLengths[i],
+        lyric: lyricUnits[i]
+      });
+    }
   }
 
   notes.push({ key: null, frame_length: SING_PADDING_FRAME_LENGTH, lyric: "" });
   return { notes };
+}
+
+function splitLyricToUnits(lyric: string): string[] {
+  const chars = Array.from(lyric);
+  if (chars.length === 0) {
+    return [];
+  }
+
+  const smallKana = new Set([
+    "ぁ", "ぃ", "ぅ", "ぇ", "ぉ",
+    "ゃ", "ゅ", "ょ", "ゎ",
+    "ァ", "ィ", "ゥ", "ェ", "ォ",
+    "ャ", "ュ", "ョ", "ヮ",
+    "っ", "ッ", "ー"
+  ]);
+
+  const units: string[] = [];
+  for (const ch of chars) {
+    if (smallKana.has(ch) && units.length > 0) {
+      units[units.length - 1] += ch;
+      continue;
+    }
+    units.push(ch);
+  }
+  return units;
+}
+
+function distributeFrameLength(total: number, count: number): number[] {
+  const safeTotal = Math.max(total, count);
+  const base = Math.floor(safeTotal / count);
+  const remainder = safeTotal % count;
+  const frames = new Array<number>(count).fill(base);
+  for (let i = 0; i < remainder; i += 1) {
+    frames[i] += 1;
+  }
+  return frames;
 }
 
 function bpmToFrameLength(bpm: number): number {

@@ -30,6 +30,7 @@ export default class Talk {
   intonationScale: string
   volumeScale: string;
   kana: boolean;
+  private lastErrorMessage?: string;
 
   constructor(params: Params, options?: TalkOptions) {
     this.host   = params?.host ?? 'localhost';
@@ -67,6 +68,18 @@ export default class Talk {
     this.kana = kana;
   }
 
+  getLastErrorMessage(): string | undefined {
+    return this.lastErrorMessage;
+  }
+
+  private clearLastErrorMessage(): void {
+    this.lastErrorMessage = undefined;
+  }
+
+  private setLastErrorMessage(message: string): void {
+    this.lastErrorMessage = message;
+  }
+
   isSimpleSingText(text: string): boolean {
     return isSimpleSingText(text);
   }
@@ -76,11 +89,13 @@ export default class Talk {
       console.log('[Talk] Requesting:', url.toString());
       const response = await fetch(url.toString(), option);
       if (!response.ok) {
-        throw new Error('[Talk] Network response was not ok');
+        throw new Error(`HTTP ${response.status} ${response.statusText}`);
       }
       return response;
     } catch (error) {
       console.error('[Talk] Fetch error:', error);
+      const text = error instanceof Error ? error.message : String(error);
+      this.setLastErrorMessage(`TTSサーバーへの接続に失敗しました: ${text}`);
     }
     return undefined;
   }
@@ -90,16 +105,21 @@ export default class Talk {
     text: string,
     options: TalkOptions = {}
   ): Promise<ArrayBuffer | undefined> {
+    this.clearLastErrorMessage();
     const parsedScore = parseSimpleSingScore(text);
     if (parsedScore) {
       const speaker = options.speaker ?? this.speaker;
-      return synthesizeSingVoice({
+      const result = await synthesizeSingVoice({
         host: this.host,
         port: this.port,
         requestedSpeaker: speaker,
         score: parsedScore,
         request: this.request.bind(this)
       });
+      if (result.error) {
+        this.setLastErrorMessage(result.error);
+      }
+      return result.audioData;
     }
 
     // デフォルト値を設定
@@ -128,6 +148,9 @@ export default class Talk {
     
     if (!query_response) {
       console.error('[Talk] Failed to get audio query response');
+      if (!this.lastErrorMessage) {
+        this.setLastErrorMessage('音声クエリの生成に失敗しました。');
+      }
       return;
     }
   
@@ -159,6 +182,9 @@ export default class Talk {
   
     if (!synthesis_response) {
       console.error('[Talk] Failed to get synthesis response');
+      if (!this.lastErrorMessage) {
+        this.setLastErrorMessage('音声合成に失敗しました。');
+      }
       return;
     }
   
