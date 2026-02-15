@@ -1,4 +1,4 @@
-import { Singer, SingerStylePair, SimpleSingScore, TalkRequest } from "./types";
+import { SimpleSingScore, TalkRequest } from "./types";
 
 type SingParams = {
   host: string;
@@ -13,109 +13,71 @@ export type SingSynthesisResult = {
   error?: string;
 };
 
-type ResolveSingerStyleResult = {
-  stylePair?: SingerStylePair;
-  error?: string;
-};
+const SING_READ_RETRY_COUNT = 2;
 
 export async function synthesizeSingVoice(params: SingParams): Promise<SingSynthesisResult> {
-  const resolved = await resolveSingerStylePair(
-    params.host,
-    params.port,
-    params.requestedSpeaker,
-    params.request
-  );
-  if (!resolved.stylePair) {
-    return { error: resolved.error ?? "歌唱用の話者解決に失敗しました。" };
-  }
-  const stylePair = resolved.stylePair;
+  const singSpeaker = params.requestedSpeaker;
 
   const queryUrl = new URL(`http://${params.host}:${params.port}/sing_frame_audio_query`);
-  queryUrl.search = new URLSearchParams({ speaker: stylePair.querySpeaker }).toString();
+  queryUrl.search = new URLSearchParams({ speaker: singSpeaker }).toString();
   const queryResponse = await params.request(queryUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params.score)
   });
   if (!queryResponse) {
-    return { error: `歌唱クエリの生成に失敗しました（speaker=${stylePair.querySpeaker}）。` };
+    return { error: `歌唱クエリの生成に失敗しました（speaker=${singSpeaker}）。` };
   }
-  const frameAudioQuery = await queryResponse.json();
+
+  let frameAudioQuery: unknown;
+  try {
+    frameAudioQuery = await queryResponse.json();
+  } catch (error) {
+    const text = error instanceof Error ? error.message : String(error);
+    return { error: `歌唱クエリ応答の解析に失敗しました: ${text}` };
+  }
 
   const synthesisUrl = new URL(`http://${params.host}:${params.port}/frame_synthesis`);
-  synthesisUrl.search = new URLSearchParams({ speaker: stylePair.synthesisSpeaker }).toString();
-  const synthesisResponse = await params.request(synthesisUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(frameAudioQuery)
-  });
-  if (!synthesisResponse) {
-    return { error: `歌唱音声の合成に失敗しました（speaker=${stylePair.synthesisSpeaker}）。` };
+  synthesisUrl.search = new URLSearchParams({ speaker: singSpeaker }).toString();
+
+  for (let attempt = 0; attempt <= SING_READ_RETRY_COUNT; attempt += 1) {
+    const synthesisResponse = await params.request(synthesisUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(frameAudioQuery)
+    });
+    if (!synthesisResponse) {
+      return { error: `歌唱音声の合成に失敗しました（speaker=${singSpeaker}）。` };
+    }
+
+    try {
+      return { audioData: await synthesisResponse.arrayBuffer() };
+    } catch (error) {
+      const text = error instanceof Error ? error.message : String(error);
+      const retryable = isRetryableReadError(error);
+      const canRetry = retryable && attempt < SING_READ_RETRY_COUNT;
+      if (!canRetry) {
+        return { error: `歌唱音声レスポンスの受信に失敗しました: ${text}` };
+      }
+      await sleep(200 * (attempt + 1));
+    }
   }
-  return { audioData: await synthesisResponse.arrayBuffer() };
+
+  return { error: "歌唱音声レスポンスの受信に失敗しました。" };
 }
 
-async function resolveSingerStylePair(
-  host: string,
-  port: string,
-  requestedSpeaker: string,
-  request: TalkRequest
-): Promise<ResolveSingerStyleResult> {
-  const singersUrl = new URL(`http://${host}:${port}/singers`);
-  const singersResponse = await request(singersUrl, { method: "GET" });
-  if (!singersResponse) {
-    return { error: "VOICEVOX の /singers 取得に失敗しました。VOICEVOX が起動しているか確認してください。" };
+function isRetryableReadError(error: unknown): boolean {
+  const text = error instanceof Error ? error.message : String(error);
+  const cause = error instanceof Error ? (error as { cause?: unknown }).cause : undefined;
+  const code = typeof cause === "object" && cause !== null && "code" in cause
+    ? String((cause as { code?: unknown }).code)
+    : "";
+  if (["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN"].includes(code)) {
+    return true;
   }
+  return /terminated|socket|network|reset/i.test(text);
+}
 
-  const singers = await singersResponse.json() as Singer[];
-  const requestedId = Number.parseInt(requestedSpeaker, 10);
-  if (Number.isNaN(requestedId)) {
-    return { error: `話者IDが不正です: ${requestedSpeaker}` };
-  }
-
-  const singIds = singers.flatMap((singer) =>
-    (singer.styles ?? [])
-      .filter((style) => style.type === "sing" || style.type === "singing_teacher")
-      .map((style) => style.id)
-  );
-
-  for (const singer of singers) {
-    const styles = singer.styles ?? [];
-    const selectedStyle = styles.find((style) => style.id === requestedId);
-    if (!selectedStyle || !selectedStyle.type) {
-      continue;
-    }
-
-    if (selectedStyle.type === "sing" || selectedStyle.type === "singing_teacher") {
-      const frameDecodeStyle = styles.find((style) => style.type === "frame_decode");
-      if (!frameDecodeStyle) {
-        return { error: `話者ID ${requestedSpeaker} に対応する frame_decode スタイルが見つかりません。` };
-      }
-      return {
-        stylePair: {
-          querySpeaker: String(selectedStyle.id),
-          synthesisSpeaker: String(frameDecodeStyle.id)
-        }
-      };
-    }
-
-    if (selectedStyle.type === "frame_decode") {
-      const singStyle = styles.find(
-        (style) => style.type === "sing" || style.type === "singing_teacher"
-      );
-      if (!singStyle) {
-        const idList = singIds.length > 0 ? singIds.join(", ") : "なし";
-        return { error: `話者ID ${requestedSpeaker} は歌唱に非対応です。歌唱対応ID: ${idList}` };
-      }
-      return {
-        stylePair: {
-          querySpeaker: String(singStyle.id),
-          synthesisSpeaker: String(selectedStyle.id)
-        }
-      };
-    }
-  }
-
-  const idList = singIds.length > 0 ? singIds.join(", ") : "なし";
-  return { error: `話者ID ${requestedSpeaker} が見つかりません。歌唱対応ID: ${idList}` };
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }

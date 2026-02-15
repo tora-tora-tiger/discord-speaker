@@ -86,11 +86,12 @@ export default class GuildSpeaker {
     }
 
     // 音声バイナリ取得し，discord.jsのAudioResourceに変換
+    const isSingText = talk.isSimpleSingText(message.content);
     const speaker = this.getSpeakerForUser(message.author.id);
-    const inputText = talk.isSimpleSingText(message.content)
-      ? message.content
-      : this.fixText(message.content);
-    const voice = await talk.voiceboxTalk(inputText, { speaker });
+    const inputText = isSingText ? message.content : this.fixText(message.content);
+    const voice = isSingText
+      ? await talk.voiceboxTalk(inputText)
+      : await talk.voiceboxTalk(inputText, { speaker });
     if(!voice) {
       console.error(`[discord${this.guild.id}] Failed to get message voice`);
       const reason = talk.getLastErrorMessage() ?? "音声合成に失敗しました。";
