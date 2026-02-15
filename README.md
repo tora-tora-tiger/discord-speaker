@@ -36,6 +36,8 @@ discord botに接続するために，`.env`をトップに置いて下さい
 DISCORD_TOKEN=
 CLIENT_ID=
 GUILD_ID= # 開発時は設定推奨（ギルド即時反映）
+TTS_HOST= # pnpm devなら127.0.0.1 / botをdockerで動かすならvoicevox
+TTS_PORT=50021
 ```
 ```
 $ git clone https://github.com/tora-tora-tiger/discord-speaker.git

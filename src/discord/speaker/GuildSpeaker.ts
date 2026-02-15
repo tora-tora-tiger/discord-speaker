@@ -89,17 +89,17 @@ export default class GuildSpeaker {
     const isSingText = talk.isSimpleSingText(message.content);
     const speaker = this.getSpeakerForUser(message.author.id);
     const inputText = isSingText ? message.content : this.fixText(message.content);
-    const voice = isSingText
-      ? await talk.voiceboxTalk(inputText)
-      : await talk.voiceboxTalk(inputText, { speaker });
-    if(!voice) {
+    const result = isSingText
+      ? await talk.voiceboxTalkWithResult(inputText)
+      : await talk.voiceboxTalkWithResult(inputText, { speaker });
+    if(!result.audioData) {
       console.error(`[discord${this.guild.id}] Failed to get message voice`);
-      const reason = talk.getLastErrorMessage() ?? "音声合成に失敗しました。";
+      const reason = result.error ?? "音声合成に失敗しました。";
       await this.notifySpeakFailure(message, reason);
       return;
     }
     const stream = new Readable();
-    stream.push(Buffer.from(voice));
+    stream.push(Buffer.from(result.audioData));
     stream.push(null);
     const resource = createAudioResource(stream, {inputType: StreamType.Arbitrary});
 
