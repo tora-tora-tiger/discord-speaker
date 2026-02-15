@@ -39,7 +39,7 @@ export default class Talk {
   private readonly requestRetryCount = 2;
   private readonly readRetryCount = 2;
 
-  constructor(params: Params, options?: TalkOptions) {
+  constructor(params: Params, options: TalkOptions = {}) {
     this.host   = params?.host ?? 'localhost';
     this.port   = params?.port ?? '50080';
     this.speaker  = options?.speaker ?? '1';
