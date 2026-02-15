@@ -181,7 +181,6 @@ export default class GuildSpeaker {
     // 100文字以上は省略する
     if (text.length > this.textLengthLimit) {
       text = text.slice(0, this.textLengthLimit) + "…";
-      text += "、なのだ";
     }
 
     console.log("[discord] fixed text:", text);
