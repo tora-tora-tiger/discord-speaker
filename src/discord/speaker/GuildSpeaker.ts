@@ -85,7 +85,10 @@ export default class GuildSpeaker {
 
     // 音声バイナリ取得し，discord.jsのAudioResourceに変換
     const speaker = this.getSpeakerForUser(message.author.id);
-    const voice = await talk.voiceboxTalk(this.fixText(message.content), { speaker });
+    const inputText = talk.isSimpleSingText(message.content)
+      ? message.content
+      : this.fixText(message.content);
+    const voice = await talk.voiceboxTalk(inputText, { speaker });
     if(!voice) {
       console.error(`[discord${this.guild.id}] Failed to get message voice`);
       // message.reply("音声合成に失敗しました"); 権限足りなくて返信できない

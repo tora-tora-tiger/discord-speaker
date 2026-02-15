@@ -3,6 +3,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as os from 'os';
 import * as path from 'path';
+import { isSimpleSingText, parseSimpleSingScore } from "@/Talk/sing/format";
+import { synthesizeSingVoice } from "@/Talk/sing/synthesis";
 
 type TalkOptions = {
   speaker?: string;
@@ -29,7 +31,7 @@ export default class Talk {
   volumeScale: string;
   kana: boolean;
 
-  constructor(params: Params, options: TalkOptions) {
+  constructor(params: Params, options?: TalkOptions) {
     this.host   = params?.host ?? 'localhost';
     this.port   = params?.port ?? '50080';
     this.speaker  = options?.speaker ?? '1';
@@ -65,6 +67,10 @@ export default class Talk {
     this.kana = kana;
   }
 
+  isSimpleSingText(text: string): boolean {
+    return isSimpleSingText(text);
+  }
+
   private async request(url: URL, option: RequestInit): Promise<Response | undefined> {
     try {
       console.log('[Talk] Requesting:', url.toString());
@@ -84,6 +90,18 @@ export default class Talk {
     text: string,
     options: TalkOptions = {}
   ): Promise<ArrayBuffer | undefined> {
+    const parsedScore = parseSimpleSingScore(text);
+    if (parsedScore) {
+      const speaker = options.speaker ?? this.speaker;
+      return synthesizeSingVoice({
+        host: this.host,
+        port: this.port,
+        requestedSpeaker: speaker,
+        score: parsedScore,
+        request: this.request.bind(this)
+      });
+    }
+
     // デフォルト値を設定
     const finalOptions: Required<TalkOptions> = {
       speaker: options.speaker ?? this.speaker,
