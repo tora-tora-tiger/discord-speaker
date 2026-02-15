@@ -83,7 +83,9 @@ export function parseSimpleSingScore(text: string): SimpleSingScore | undefined 
 }
 
 function parseScoreItem(item: string): { noteToken: string; lyricToken: string } | undefined {
-  const parts = item.split(/\s+/).filter(Boolean);
+  // 全角スペース(U+3000)も区切りとして扱う
+  const normalized = item.replace(/\u3000/g, " ");
+  const parts = normalized.split(/\s+/).filter(Boolean);
   if (parts.length < 1 || parts.length > 2) {
     return undefined;
   }
