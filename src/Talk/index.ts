@@ -29,7 +29,7 @@ export default class Talk {
   volumeScale: string;
   kana: boolean;
 
-  constructor(params: Params, options: TalkOptions) {
+  constructor(params: Params, options: TalkOptions = {}) {
     this.host   = params?.host ?? 'localhost';
     this.port   = params?.port ?? '50080';
     this.speaker  = options?.speaker ?? '1';
