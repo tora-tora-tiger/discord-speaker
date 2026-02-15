@@ -2,6 +2,8 @@ import { SimpleSingNote, SimpleSingScore } from "./types";
 
 const SING_PADDING_FRAME_LENGTH = 15;
 const VOICEVOX_FRAME_RATE = 90;
+const MIDDLE_C_MIDI = 60;
+const MIDDLE_C_OCTAVE = 3;
 
 export function isSimpleSingText(text: string): boolean {
   return parseSimpleSingScore(text) !== undefined;
@@ -157,7 +159,7 @@ function noteTokenToMidi(token: string): number | null | undefined {
     semitone -= 1;
   }
 
-  const midi = (octave + 1) * 12 + semitone;
+  const midi = (octave - MIDDLE_C_OCTAVE) * 12 + MIDDLE_C_MIDI + semitone;
   if (midi < 0 || midi > 127) {
     return undefined;
   }
