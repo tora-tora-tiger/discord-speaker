@@ -88,6 +88,10 @@ export default class Talk {
   }
 
   private isRetryableFetchError(error: unknown): boolean {
+    if (this.isHttpError(error)) {
+      return Boolean(error.retryable);
+    }
+
     const message = error instanceof Error ? error.message : String(error);
     const cause = error instanceof Error ? (error as { cause?: unknown }).cause : undefined;
     const code = typeof cause === "object" && cause !== null && "code" in cause
@@ -167,7 +171,11 @@ export default class Talk {
         console.log('[Talk] Requesting:', url.toString());
         const response = await fetch(url.toString(), option);
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+          const detail = await this.extractErrorDetail(response);
+          const message = detail
+            ? `HTTP ${response.status} ${response.statusText}: ${detail}`
+            : `HTTP ${response.status} ${response.statusText}`;
+          throw this.createHttpError(message, response.status);
         }
         return response;
       } catch (error) {
@@ -180,11 +188,44 @@ export default class Talk {
           continue;
         }
         console.error('[Talk] Fetch error:', error);
+        if (this.isHttpError(error) && error.status >= 400 && error.status < 500) {
+          this.setLastErrorMessage(`TTSリクエストが不正です: ${error.message}`);
+          return undefined;
+        }
         const text = error instanceof Error ? error.message : String(error);
         this.setLastErrorMessage(`TTSサーバーへの接続に失敗しました: ${text}`);
+        return undefined;
       }
     }
     return undefined;
+  }
+
+  private async extractErrorDetail(response: Response): Promise<string | undefined> {
+    try {
+      const contentType = response.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        const body = await response.json() as { detail?: unknown; message?: unknown; error?: unknown };
+        if (typeof body.detail === "string") return body.detail;
+        if (typeof body.message === "string") return body.message;
+        if (typeof body.error === "string") return body.error;
+        return JSON.stringify(body);
+      }
+      const text = await response.text();
+      return text.trim().length > 0 ? text.trim() : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private createHttpError(message: string, status: number): Error & { status: number; retryable: boolean } {
+    const error = new Error(message) as Error & { status: number; retryable: boolean };
+    error.status = status;
+    error.retryable = status === 429 || status >= 500;
+    return error;
+  }
+
+  private isHttpError(error: unknown): error is Error & { status: number; retryable: boolean } {
+    return typeof error === "object" && error !== null && "status" in error && "retryable" in error;
   }
   
   // voicboxを利用
@@ -203,7 +244,7 @@ export default class Talk {
         score: parsedScore,
         request: this.request.bind(this)
       });
-      if (result.error) {
+      if (result.error && !this.lastErrorMessage) {
         this.setLastErrorMessage(result.error);
       }
       return result.audioData;
