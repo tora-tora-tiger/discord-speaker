@@ -109,8 +109,8 @@ export default class GuildSpeaker {
 
   private fixText(text: string): string {
     // URLを省略する
-    // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
-    const linkPattern = /\w+:\/\/[\w!?/+\\\-_~;.,*&@#$%()'[\]=]+/g;
+    // スキーム付きURLを丸ごと省略（ポート番号やpercent-encodingを含む）
+    const linkPattern = /\b[a-z][a-z0-9+.-]*:\/\/[^\s<>()]+/gi;
     text = text.replace(linkPattern, "ゆーあーるえる");
 
     // @everyone,@hereを置き換える
