@@ -30,9 +30,10 @@ export function parseSimpleSingScore(text: string): SimpleSingScore | undefined 
     return undefined;
   }
 
+  const normalizedText = normalizeAbcForParser(text);
   let tune: abcjs.TuneObject | undefined;
   try {
-    const tunes = abcjs.parseOnly(text);
+    const tunes = abcjs.parseOnly(normalizedText);
     tune = tunes[0];
   } catch {
     return undefined;
@@ -111,6 +112,13 @@ function isLikelyAbcText(text: string): boolean {
   return /^\s*(X:|T:|M:|L:|Q:|K:|V:|w:)/m.test(text);
 }
 
+function normalizeAbcForParser(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
+    .join("\n");
+}
+
 function detectMelodyVoiceIndex(tune: abcjs.TuneObject): number {
   for (const line of tune.lines ?? []) {
     for (const staff of line.staff ?? []) {
@@ -176,20 +184,35 @@ function extractLyric(note: AbcVoiceNote): string {
     return DEFAULT_NOTE_LYRIC;
   }
 
-  const raw = lyrics.map((entry) => entry.syllable ?? "").join("");
-  const divider = lyrics[lyrics.length - 1]?.divider;
-  const normalized = raw.replace(/\s+/g, "").trim();
+  let sawTieDivider = false;
+  for (const entry of lyrics) {
+    if (entry.divider === "_") {
+      sawTieDivider = true;
+    }
 
-  if (normalized === "*" || normalized === "~") {
-    return TIE_NOTE_LYRIC;
+    const normalized = normalizeLyricSyllable(entry.syllable ?? "");
+    if (normalized === "*" || normalized === "~") {
+      return TIE_NOTE_LYRIC;
+    }
+    if (normalized.length > 0) {
+      // 複数w:行がある場合は先頭の有効な1行分を採用
+      return normalized;
+    }
   }
-  if (normalized.length > 0) {
-    return normalized;
-  }
-  if (divider === "_") {
+
+  if (sawTieDivider) {
     return TIE_NOTE_LYRIC;
   }
   return DEFAULT_NOTE_LYRIC;
+}
+
+function normalizeLyricSyllable(syllable: string): string {
+  const stripped = syllable
+    // 1番, 2., 3) などの節番号は歌詞として扱わない
+    .replace(/^\d+[\.\)．）]*/u, "")
+    .replace(/\s+/g, "")
+    .trim();
+  return stripped;
 }
 
 function durationToFrameLength(

@@ -83,6 +83,7 @@ export default class GuildSpeaker {
 
     // 音声バイナリ取得し，discord.jsのAudioResourceに変換
     const isSingText = talk.isSimpleSingText(message.content);
+    console.log(`[discord] sing text detected: ${isSingText}`);
     const speaker = this.getSpeakerForUser(message.author.id);
     const inputText = isSingText ? message.content : this.fixText(message.content);
     const result = isSingText
