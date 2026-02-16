@@ -25,6 +25,10 @@ export function isSimpleSingText(text: string): boolean {
   return parseSimpleSingScore(text) !== undefined;
 }
 
+export function isLikelyAbcSingText(text: string): boolean {
+  return isLikelyAbcText(text);
+}
+
 export function parseSimpleSingScore(text: string): SimpleSingScore | undefined {
   if (!isLikelyAbcText(text)) {
     return undefined;

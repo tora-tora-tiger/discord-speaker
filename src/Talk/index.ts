@@ -3,7 +3,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as os from 'os';
 import * as path from 'path';
-import { isSimpleSingText, parseSimpleSingScore } from "@/Talk/sing/format";
+import { isLikelyAbcSingText, isSimpleSingText, parseSimpleSingScore } from "@/Talk/sing/format";
 import { synthesizeSingVoice } from "@/Talk/sing/synthesis";
 
 type TalkOptions = {
@@ -270,6 +270,10 @@ export default class Talk {
         audioData: result.audioData,
         error: localError ?? result.error
       };
+    }
+    if (isLikelyAbcSingText(text)) {
+      setLocalError("ABC歌唱の解析に失敗しました。記法を確認してください。");
+      return { error: localError };
     }
 
     // デフォルト値を設定

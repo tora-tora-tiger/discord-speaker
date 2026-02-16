@@ -58,6 +58,8 @@ git clone https://github.com/tora-tora-tiger/discord-speaker.git
 cd discord-speaker
 pnpm install
 pnpm deploy-commands
-docker compose --profile voicevox up -d
+
+# voicevoxだけdocker
+docker compose up -d voicevox
 pnpm dev
 ```

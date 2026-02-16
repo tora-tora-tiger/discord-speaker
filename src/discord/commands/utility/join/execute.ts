@@ -21,7 +21,7 @@ async function execute(interaction: CommandInteraction) {
 
   guildSpeakerManager.subscribe(interaction.guild, interaction.channelId);
   console.log("[discord] registered text channel: ", interaction.channelId);
-  interaction.reply(`Joined ${voiceState.channel.name}`)
+  await interaction.reply(`Joined ${voiceState.channel.name}`);
 }
 
 export default execute;
