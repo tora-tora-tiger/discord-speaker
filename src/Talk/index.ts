@@ -226,6 +226,16 @@ export default class Talk {
   private isHttpError(error: unknown): error is Error & { status: number; retryable: boolean } {
     return typeof error === "object" && error !== null && "status" in error && "retryable" in error;
   }
+
+  private isWavAudio(audioData: ArrayBuffer): boolean {
+    if (audioData.byteLength < 12) {
+      return false;
+    }
+    const bytes = new Uint8Array(audioData);
+    const riff = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+    const wave = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    return riff === "RIFF" && wave === "WAVE";
+  }
   
   // voicboxを利用
   async voiceboxTalkWithResult(
@@ -251,6 +261,10 @@ export default class Talk {
       });
       if (result.error) {
         setLocalError(result.error);
+      }
+      if (result.audioData && !this.isWavAudio(result.audioData)) {
+        setLocalError("歌唱音声データが不正な形式です（WAVではありません）。");
+        return { error: localError };
       }
       return {
         audioData: result.audioData,
@@ -329,6 +343,10 @@ export default class Talk {
       setLocalError
     );
     if (!audioData) {
+      return { error: localError };
+    }
+    if (!this.isWavAudio(audioData)) {
+      setLocalError("音声データが不正な形式です（WAVではありません）。");
       return { error: localError };
     }
     

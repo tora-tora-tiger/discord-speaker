@@ -1,194 +1,209 @@
+import * as abcjs from "abcjs";
 import { SimpleSingNote, SimpleSingScore } from "./types";
 
 const SING_PADDING_FRAME_LENGTH = 15;
-const VOICEVOX_FRAME_RATE = 90;
-const MIDDLE_C_MIDI = 60;
-const MIDDLE_C_OCTAVE = 3;
+const VOICEVOX_FRAME_RATE = 93.75;
+const DEFAULT_NOTE_LYRIC = "あ";
+const TIE_NOTE_LYRIC = "ー";
+
+type AbcLyric = {
+  syllable: string;
+  divider: " " | "-" | "_";
+};
+
+type AbcMidiPitch = {
+  cmd?: string;
+  pitch?: number;
+};
+
+type AbcVoiceNote = abcjs.VoiceItemNote & {
+  lyric?: AbcLyric[];
+  midiPitches?: AbcMidiPitch[];
+};
 
 export function isSimpleSingText(text: string): boolean {
   return parseSimpleSingScore(text) !== undefined;
 }
 
 export function parseSimpleSingScore(text: string): SimpleSingScore | undefined {
-  const lines = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-  if (lines.length < 2) {
+  if (!isLikelyAbcText(text)) {
     return undefined;
   }
 
-  const bpmLine = lines[0];
-  if (!/^\d+(?:\.\d+)?$/.test(bpmLine)) {
-    return undefined;
-  }
-  const bpm = Number.parseFloat(bpmLine);
-  if (!Number.isFinite(bpm) || bpm <= 0) {
+  let tune: abcjs.TuneObject | undefined;
+  try {
+    const tunes = abcjs.parseOnly(text);
+    tune = tunes[0];
+  } catch {
     return undefined;
   }
 
-  const noteFrameLength = bpmToFrameLength(bpm);
-  const items = lines
-    .slice(1)
-    .flatMap((line) => line.split(/[,，、]/))
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-  if (items.length === 0) {
+  if (!tune) {
+    return undefined;
+  }
+
+  try {
+    tune.setUpAudio({});
+  } catch {
+    // midiPitchesの付与に失敗した場合は後段の抽出で弾く
+  }
+
+  const bpm = tune.getBpm();
+  const beatLength = tune.getBeatLength();
+  if (!Number.isFinite(bpm) || bpm <= 0 || !Number.isFinite(beatLength) || beatLength <= 0) {
+    return undefined;
+  }
+
+  const framesPerWholeNote = (60 * VOICEVOX_FRAME_RATE) / (bpm * beatLength);
+  if (!Number.isFinite(framesPerWholeNote) || framesPerWholeNote <= 0) {
+    return undefined;
+  }
+
+  const melodyVoiceIndex = detectMelodyVoiceIndex(tune);
+  const voiceNotes = collectVoiceNotes(tune, melodyVoiceIndex);
+  if (voiceNotes.length === 0) {
     return undefined;
   }
 
   const notes: SimpleSingNote[] = [{ key: null, frame_length: SING_PADDING_FRAME_LENGTH, lyric: "" }];
-  for (const item of items) {
-    const parsed = parseScoreItem(item);
-    if (!parsed) {
+  let frameCarry = 0;
+  let hasPlayableNote = false;
+
+  for (const voiceNote of voiceNotes) {
+    const duration = voiceNote.duration;
+    if (!Number.isFinite(duration) || duration <= 0) {
       return undefined;
     }
 
-    const noteToken = parsed.noteToken;
-    const lyricToken = parsed.lyricToken;
-    const key = noteTokenToMidi(noteToken);
-    if (key === undefined) {
-      return undefined;
-    }
-    if (key !== null && lyricToken.length === 0) {
-      return undefined;
-    }
+    const frame = durationToFrameLength(duration, framesPerWholeNote, frameCarry);
+    frameCarry = frame.carry;
 
-    if (key === null) {
-      notes.push({
-        key: null,
-        frame_length: noteFrameLength,
-        lyric: ""
-      });
+    if (isRestNote(voiceNote)) {
+      notes.push({ key: null, frame_length: frame.frameLength, lyric: "" });
       continue;
     }
 
-    const lyricUnits = splitLyricToUnits(lyricToken);
-    if (lyricUnits.length === 0) {
+    const key = extractMidiKey(voiceNote);
+    if (key === undefined) {
       return undefined;
     }
 
-    const distributedLengths = distributeFrameLength(noteFrameLength, lyricUnits.length);
-    for (let i = 0; i < lyricUnits.length; i += 1) {
-      notes.push({
-        key,
-        frame_length: distributedLengths[i],
-        lyric: lyricUnits[i]
-      });
-    }
+    notes.push({
+      key,
+      frame_length: frame.frameLength,
+      lyric: extractLyric(voiceNote)
+    });
+    hasPlayableNote = true;
+  }
+
+  if (!hasPlayableNote) {
+    return undefined;
   }
 
   notes.push({ key: null, frame_length: SING_PADDING_FRAME_LENGTH, lyric: "" });
   return { notes };
 }
 
-function parseScoreItem(item: string): { noteToken: string; lyricToken: string } | undefined {
-  // 全角スペース(U+3000)も区切りとして扱う
-  const normalized = item.replace(/\u3000/g, " ");
-  const parts = normalized.split(/\s+/).filter(Boolean);
-  if (parts.length < 1 || parts.length > 2) {
-    return undefined;
+function isLikelyAbcText(text: string): boolean {
+  if (!/^\s*K:/m.test(text)) {
+    return false;
   }
+  return /^\s*(X:|T:|M:|L:|Q:|K:|V:|w:)/m.test(text);
+}
 
-  const noteToken = parts[0];
-  if (/^(R|REST|-)$/i.test(noteToken)) {
-    // 休符は歌詞不要
-    if (parts.length !== 1) {
-      return undefined;
+function detectMelodyVoiceIndex(tune: abcjs.TuneObject): number {
+  for (const line of tune.lines ?? []) {
+    for (const staff of line.staff ?? []) {
+      const voices = staff.voices ?? [];
+      for (let i = 0; i < voices.length; i += 1) {
+        const voice = voices[i];
+        if (voice.some((item) => item.el_type === "note")) {
+          return i;
+        }
+      }
     }
-    return { noteToken, lyricToken: "" };
   }
-
-  // 通常ノートは「音名 + 空白 + 歌詞」を必須にする
-  if (parts.length !== 2) {
-    return undefined;
-  }
-  const lyricToken = parts[1];
-  if (lyricToken.length === 0) {
-    return undefined;
-  }
-  return { noteToken, lyricToken };
+  return 0;
 }
 
-function splitLyricToUnits(lyric: string): string[] {
-  const chars = Array.from(lyric);
-  if (chars.length === 0) {
-    return [];
-  }
+function collectVoiceNotes(tune: abcjs.TuneObject, melodyVoiceIndex: number): AbcVoiceNote[] {
+  const result: AbcVoiceNote[] = [];
 
-  const smallKana = new Set([
-    "ぁ", "ぃ", "ぅ", "ぇ", "ぉ",
-    "ゃ", "ゅ", "ょ", "ゎ",
-    "ァ", "ィ", "ゥ", "ェ", "ォ",
-    "ャ", "ュ", "ョ", "ヮ",
-    "っ", "ッ", "ー"
-  ]);
+  for (const line of tune.lines ?? []) {
+    for (const staff of line.staff ?? []) {
+      const voice = staff.voices?.[melodyVoiceIndex];
+      if (!voice) {
+        continue;
+      }
 
-  const units: string[] = [];
-  for (const ch of chars) {
-    if (smallKana.has(ch) && units.length > 0) {
-      units[units.length - 1] += ch;
-      continue;
+      for (const item of voice) {
+        if (item.el_type !== "note") {
+          continue;
+        }
+        result.push(item as AbcVoiceNote);
+      }
+      break;
     }
-    units.push(ch);
-  }
-  return units;
-}
-
-function distributeFrameLength(total: number, count: number): number[] {
-  const safeTotal = Math.max(total, count);
-  const base = Math.floor(safeTotal / count);
-  const remainder = safeTotal % count;
-  const frames = new Array<number>(count).fill(base);
-  for (let i = 0; i < remainder; i += 1) {
-    frames[i] += 1;
-  }
-  return frames;
-}
-
-function bpmToFrameLength(bpm: number): number {
-  const frameLength = Math.round((60 * VOICEVOX_FRAME_RATE) / bpm);
-  return Math.max(1, frameLength);
-}
-
-function noteTokenToMidi(token: string): number | null | undefined {
-  const upper = token.toUpperCase();
-  if (upper === "R" || upper === "REST" || upper === "-") {
-    return null;
   }
 
-  const match = token.match(/^([A-Ga-g])([#b]?)(-?\d+)$/);
-  if (!match) {
+  return result;
+}
+
+function isRestNote(note: AbcVoiceNote): boolean {
+  return note.rest !== undefined;
+}
+
+function extractMidiKey(note: AbcVoiceNote): number | undefined {
+  const midiPitches = note.midiPitches ?? [];
+  const values = midiPitches
+    .filter((pitch) => pitch.cmd === "note" && Number.isFinite(pitch.pitch))
+    .map((pitch) => Number(pitch.pitch));
+
+  if (values.length === 0) {
     return undefined;
   }
 
-  const note = match[1].toUpperCase();
-  const accidental = match[2];
-  const octave = Number.parseInt(match[3], 10);
-  if (Number.isNaN(octave)) {
+  const key = Math.max(...values);
+  if (!Number.isFinite(key) || key < 0 || key > 127) {
     return undefined;
   }
+  return Math.round(key);
+}
 
-  const semitoneMap: Record<string, number> = {
-    C: 0,
-    D: 2,
-    E: 4,
-    F: 5,
-    G: 7,
-    A: 9,
-    B: 11
+function extractLyric(note: AbcVoiceNote): string {
+  const lyrics = note.lyric ?? [];
+  if (lyrics.length === 0) {
+    return DEFAULT_NOTE_LYRIC;
+  }
+
+  const raw = lyrics.map((entry) => entry.syllable ?? "").join("");
+  const divider = lyrics[lyrics.length - 1]?.divider;
+  const normalized = raw.replace(/\s+/g, "").trim();
+
+  if (normalized === "*" || normalized === "~") {
+    return TIE_NOTE_LYRIC;
+  }
+  if (normalized.length > 0) {
+    return normalized;
+  }
+  if (divider === "_") {
+    return TIE_NOTE_LYRIC;
+  }
+  return DEFAULT_NOTE_LYRIC;
+}
+
+function durationToFrameLength(
+  durationWhole: number,
+  framesPerWholeNote: number,
+  carry: number
+): { frameLength: number; carry: number } {
+  const rawFrameLength = durationWhole * framesPerWholeNote + carry;
+  const roundedFrameLength = Math.round(rawFrameLength);
+  if (roundedFrameLength < 1) {
+    return { frameLength: 1, carry: rawFrameLength - 1 };
+  }
+  return {
+    frameLength: roundedFrameLength,
+    carry: rawFrameLength - roundedFrameLength
   };
-
-  let semitone = semitoneMap[note];
-  if (accidental === "#") {
-    semitone += 1;
-  } else if (accidental === "b") {
-    semitone -= 1;
-  }
-
-  const midi = (octave - MIDDLE_C_OCTAVE) * 12 + MIDDLE_C_MIDI + semitone;
-  if (midi < 0 || midi > 127) {
-    return undefined;
-  }
-  return midi;
 }

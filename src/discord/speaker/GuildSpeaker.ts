@@ -25,15 +25,11 @@ export default class GuildSpeaker {
     this.audioResourceQueue = new Array<AudioResource>();
     // 読み上げが終わったらキューに入った次の音声を再生する
     this.player.on(AudioPlayerStatus.Idle, () => {
-      if(this.audioResourceQueue.length > 0) {
-        const nextResource = this.audioResourceQueue.shift();
-        if(nextResource) {
-          this.player.play(nextResource);
-          console.log("[discord] Next audio resource playing");
-        } else {
-          console.error("[discord] Failed to get next audio resource");
-        }
-      }
+      this.playNextFromQueue();
+    });
+    this.player.on("error", (error) => {
+      console.error(`[discord/${this.guild.name}] Audio player error:`, error);
+      this.playNextFromQueue();
     });
   }
 
@@ -187,6 +183,20 @@ export default class GuildSpeaker {
 
     console.log("[discord] fixed text:", text);
     return text;
+  }
+
+  private playNextFromQueue(): void {
+    if (this.audioResourceQueue.length <= 0) {
+      return;
+    }
+
+    const nextResource = this.audioResourceQueue.shift();
+    if (!nextResource) {
+      console.error("[discord] Failed to get next audio resource");
+      return;
+    }
+    this.player.play(nextResource);
+    console.log("[discord] Next audio resource playing");
   }
 
   private async notifySpeakFailure(
