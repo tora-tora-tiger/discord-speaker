@@ -108,10 +108,9 @@ export default class GuildSpeaker {
   }
 
   private fixText(text: string): string {
-    // コードブロック（```で始まるメッセージ）
-    if (/^\s*```/.test(text)) {
-      text = "こーどぶろっく";
-    }
+    // コードブロック（```...```）を省略し，前後の文章は残す
+    const fencedCodeBlockPattern = /```[\s\S]*?```|```[\s\S]*$/g;
+    text = text.replace(fencedCodeBlockPattern, "こーどぶろっく");
 
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
