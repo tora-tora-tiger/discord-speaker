@@ -108,6 +108,10 @@ export default class GuildSpeaker {
   }
 
   private fixText(text: string): string {
+    // コードブロック（```...```）を省略し，前後の文章は残す
+    const fencedCodeBlockPattern = /```[\s\S]*?```|```[\s\S]*$/g;
+    text = text.replace(fencedCodeBlockPattern, "こーどぶろっく");
+
     // URLを省略する
     // const urlPattern = new RegExp(`https?://[\\w!?/+\\-_~;.,*&@#$%()'[\\]]+`);
     const linkPattern = /\w+:\/\/[\w!?/+\\\-_~;.,*&@#$%()'[\]=]+/g;
