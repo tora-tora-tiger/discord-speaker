@@ -8,7 +8,7 @@ const execute = async function(interaction: CommandInteraction) {
 
   const guildSpeaker = guildSpeakerManager.getReadMessages(interaction.guild.id);
   if (!guildSpeaker) {
-    return interaction.reply("ボットがこのサーバーで有効化されていません。まず/joinコマンドを実行してください");
+    return interaction.reply("このサーバーでは現在読み上げ中ではありません");
   }
 
   const skipped = guildSpeaker.skipCurrent();
