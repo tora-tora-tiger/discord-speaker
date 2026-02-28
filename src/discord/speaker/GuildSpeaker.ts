@@ -14,6 +14,8 @@ export default class GuildSpeaker {
   private textLengthLimit = 100;
   private userSpeakers = new Map<Snowflake, string>(); // ユーザーID → 話者ID
   private serverSpeaker?: string; // サーバーのデフォルト話者
+  private lastErrorNotifyAt = 0;
+  private readonly errorNotifyCooldownMs = 15000;
 
   constructor(guild: Guild, manager: GuildSpeakerManager) {
     this.guild = guild;
@@ -23,15 +25,11 @@ export default class GuildSpeaker {
     this.audioResourceQueue = new Array<AudioResource>();
     // 読み上げが終わったらキューに入った次の音声を再生する
     this.player.on(AudioPlayerStatus.Idle, () => {
-      if(this.audioResourceQueue.length > 0) {
-        const nextResource = this.audioResourceQueue.shift();
-        if(nextResource) {
-          this.player.play(nextResource);
-          console.log("[discord] Next audio resource playing");
-        } else {
-          console.error("[discord] Failed to get next audio resource");
-        }
-      }
+      this.playNextFromQueue();
+    });
+    this.player.on("error", (error) => {
+      console.error(`[discord/${this.guild.name}] Audio player error:`, error);
+      this.playNextFromQueue();
     });
   }
 
@@ -84,15 +82,21 @@ export default class GuildSpeaker {
     }
 
     // 音声バイナリ取得し，discord.jsのAudioResourceに変換
+    const isSingText = talk.isSimpleSingText(message.content);
+    console.log(`[discord] sing text detected: ${isSingText}`);
     const speaker = this.getSpeakerForUser(message.author.id);
-    const voice = await talk.voiceboxTalk(this.fixText(message.content), { speaker });
-    if(!voice) {
+    const inputText = isSingText ? message.content : this.fixText(message.content);
+    const result = isSingText
+      ? await talk.voiceboxTalkWithResult(inputText)
+      : await talk.voiceboxTalkWithResult(inputText, { speaker });
+    if(!result.audioData) {
       console.error(`[discord${this.guild.id}] Failed to get message voice`);
-      // message.reply("音声合成に失敗しました"); 権限足りなくて返信できない
+      const reason = result.error ?? "音声合成に失敗しました。";
+      await this.notifySpeakFailure(message, reason);
       return;
     }
     const stream = new Readable();
-    stream.push(Buffer.from(voice));
+    stream.push(Buffer.from(result.audioData));
     stream.push(null);
     const resource = createAudioResource(stream, {inputType: StreamType.Arbitrary});
 
@@ -193,5 +197,43 @@ export default class GuildSpeaker {
 
     console.log("[discord] fixed text:", text);
     return text;
+  }
+
+  private playNextFromQueue(): void {
+    if (this.audioResourceQueue.length <= 0) {
+      return;
+    }
+
+    const nextResource = this.audioResourceQueue.shift();
+    if (!nextResource) {
+      console.error("[discord] Failed to get next audio resource");
+      return;
+    }
+    this.player.play(nextResource);
+    console.log("[discord] Next audio resource playing");
+  }
+
+  private async notifySpeakFailure(
+    message: OmitPartialGroupDMChannel<Message>,
+    reason: string
+  ): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastErrorNotifyAt < this.errorNotifyCooldownMs) {
+      return;
+    }
+    this.lastErrorNotifyAt = now;
+
+    if (!message.channel.isTextBased()) {
+      return;
+    }
+
+    try {
+      await message.channel.send({
+        content: `読み上げに失敗しました: ${reason}`,
+        allowedMentions: { parse: [] }
+      });
+    } catch (error) {
+      console.error(`[discord/${this.guild.name}] Failed to notify speak error:`, error);
+    }
   }
 }
