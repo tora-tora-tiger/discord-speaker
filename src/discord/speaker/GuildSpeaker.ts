@@ -111,6 +111,15 @@ export default class GuildSpeaker {
     }
   }
 
+  // 現在再生中の読み上げをスキップする
+  skipCurrent(): boolean {
+    if (this.player.state.status === AudioPlayerStatus.Idle) {
+      return false;
+    }
+
+    return this.player.stop(true);
+  }
+
   private fixText(text: string): string {
     // コードブロック（```...```）を省略し，前後の文章は残す
     const fencedCodeBlockPattern = /```[\s\S]*?```|```[\s\S]*$/g;
