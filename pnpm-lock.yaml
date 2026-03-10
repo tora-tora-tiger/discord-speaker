@@ -17,6 +17,9 @@ importers:
       '@snazzah/davey':
         specifier: ^0.1.10
         version: 0.1.10
+      abcjs:
+        specifier: ^6.6.1
+        version: 6.6.1
       discord.js:
         specifier: ^14.25.1
         version: 14.25.1
@@ -487,6 +490,9 @@ packages:
   '@vladfrangu/async_event_emitter@2.4.6':
     resolution: {integrity: sha512-RaI5qZo6D2CVS6sTHFKg1v5Ohq/+Bo2LZ5gzUEwZ/WkHhwtGTCB/sVLw8ijOkAUxasZ+WshN/Rzj4ywsABJ5ZA==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
+
+  abcjs@6.6.1:
+    resolution: {integrity: sha512-DM7nJcUXCJRVESk9HghI1/RdO8kJqWgqOj2f7p+rZ9AMa4XdlkXLPLRCQbwMEj8VwEG0DvhHIs0pd8RMAIqqzg==}
 
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
@@ -1603,6 +1609,8 @@ snapshots:
       eslint-visitor-keys: 4.2.0
 
   '@vladfrangu/async_event_emitter@2.4.6': {}
+
+  abcjs@6.6.1: {}
 
   abbrev@1.1.1: {}
 

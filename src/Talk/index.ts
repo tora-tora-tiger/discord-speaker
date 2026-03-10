@@ -3,6 +3,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as os from 'os';
 import * as path from 'path';
+import { isLikelyAbcSingText, isSimpleSingText, parseSimpleSingScore } from "@/Talk/sing/format";
+import { synthesizeSingVoice } from "@/Talk/sing/synthesis";
 
 type TalkOptions = {
   speaker?: string;
@@ -18,9 +20,15 @@ type Params = {
   port: string;
 };
 
+export type TalkSynthesisResult = {
+  audioData?: ArrayBuffer;
+  error?: string;
+};
+
 export default class Talk {
   host: string;
   port: string;
+  private readonly singSpeaker = "6000";
 
   speaker: string
   speedScale: string;
@@ -28,6 +36,8 @@ export default class Talk {
   intonationScale: string
   volumeScale: string;
   kana: boolean;
+  private readonly requestRetryCount = 2;
+  private readonly readRetryCount = 2;
 
   constructor(params: Params, options: TalkOptions = {}) {
     this.host   = params?.host ?? 'localhost';
@@ -65,25 +75,207 @@ export default class Talk {
     this.kana = kana;
   }
 
-  private async request(url: URL, option: RequestInit): Promise<Response | undefined> {
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private isRetryableFetchError(error: unknown): boolean {
+    if (this.isHttpError(error)) {
+      return Boolean(error.retryable);
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    const cause = error instanceof Error ? (error as { cause?: unknown }).cause : undefined;
+    const code = typeof cause === "object" && cause !== null && "code" in cause
+      ? String((cause as { code?: unknown }).code)
+      : "";
+    if (["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN"].includes(code)) {
+      return true;
+    }
+    return /terminated|fetch failed|socket|network/i.test(message);
+  }
+
+  private isRetryableReadError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    const cause = error instanceof Error ? (error as { cause?: unknown }).cause : undefined;
+    const code = typeof cause === "object" && cause !== null && "code" in cause
+      ? String((cause as { code?: unknown }).code)
+      : "";
+    if (["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN"].includes(code)) {
+      return true;
+    }
+    return /terminated|socket|network|reset/i.test(message);
+  }
+
+  private async readJsonSafely<T>(
+    response: Response,
+    context: string,
+    setError: (message: string) => void
+  ): Promise<T | undefined> {
     try {
-      console.log('[Talk] Requesting:', url.toString());
-      const response = await fetch(url.toString(), option);
-      if (!response.ok) {
-        throw new Error('[Talk] Network response was not ok');
-      }
-      return response;
+      return await response.json() as T;
     } catch (error) {
-      console.error('[Talk] Fetch error:', error);
+      console.error(`[Talk] Failed to parse JSON response (${context}):`, error);
+      const text = error instanceof Error ? error.message : String(error);
+      setError(`${context}のレスポンス解析に失敗しました: ${text}`);
+      return undefined;
+    }
+  }
+
+  private async synthesizeAndReadWithRetry(
+    url: URL,
+    options: RequestInit,
+    context: string,
+    setError: (message: string) => void
+  ): Promise<ArrayBuffer | undefined> {
+    for (let attempt = 0; attempt <= this.readRetryCount; attempt += 1) {
+      const response = await this.request(url, options, setError);
+      if (!response) {
+        setError(`${context}の通信に失敗しました。`);
+        return undefined;
+      }
+
+      try {
+        return await response.arrayBuffer();
+      } catch (error) {
+        const retryable = this.isRetryableReadError(error);
+        const canRetry = retryable && attempt < this.readRetryCount;
+        if (canRetry) {
+          const backoffMs = 200 * (attempt + 1);
+          console.warn(`[Talk] Read retry ${attempt + 1}/${this.readRetryCount}: ${url.toString()}`);
+          await this.sleep(backoffMs);
+          continue;
+        }
+        console.error(`[Talk] Failed to read audio response (${context}):`, error);
+        const text = error instanceof Error ? error.message : String(error);
+        setError(`${context}の音声受信に失敗しました: ${text}`);
+        return undefined;
+      }
+    }
+    setError(`${context}の音声受信に失敗しました。`);
+    return undefined;
+  }
+
+  isSimpleSingText(text: string): boolean {
+    return isSimpleSingText(text);
+  }
+
+  private async request(
+    url: URL,
+    option: RequestInit,
+    setError: (message: string) => void
+  ): Promise<Response | undefined> {
+    for (let attempt = 0; attempt <= this.requestRetryCount; attempt += 1) {
+      try {
+        console.log('[Talk] Requesting:', url.toString());
+        const response = await fetch(url.toString(), option);
+        if (!response.ok) {
+          const detail = await this.extractErrorDetail(response);
+          const message = detail
+            ? `HTTP ${response.status} ${response.statusText}: ${detail}`
+            : `HTTP ${response.status} ${response.statusText}`;
+          throw this.createHttpError(message, response.status);
+        }
+        return response;
+      } catch (error) {
+        const retryable = this.isRetryableFetchError(error);
+        const canRetry = retryable && attempt < this.requestRetryCount;
+        if (canRetry) {
+          const backoffMs = 200 * (attempt + 1);
+          console.warn(`[Talk] Request retry ${attempt + 1}/${this.requestRetryCount}: ${url.toString()}`);
+          await this.sleep(backoffMs);
+          continue;
+        }
+        console.error('[Talk] Fetch error:', error);
+        if (this.isHttpError(error) && error.status >= 400 && error.status < 500) {
+          setError(`TTSリクエストが不正です: ${error.message}`);
+          return undefined;
+        }
+        const text = error instanceof Error ? error.message : String(error);
+        setError(`TTSサーバーへの接続に失敗しました: ${text}`);
+        return undefined;
+      }
     }
     return undefined;
   }
+
+  private async extractErrorDetail(response: Response): Promise<string | undefined> {
+    try {
+      const contentType = response.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        const body = await response.json() as { detail?: unknown; message?: unknown; error?: unknown };
+        if (typeof body.detail === "string") return body.detail;
+        if (typeof body.message === "string") return body.message;
+        if (typeof body.error === "string") return body.error;
+        return JSON.stringify(body);
+      }
+      const text = await response.text();
+      return text.trim().length > 0 ? text.trim() : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private createHttpError(message: string, status: number): Error & { status: number; retryable: boolean } {
+    const error = new Error(message) as Error & { status: number; retryable: boolean };
+    error.status = status;
+    error.retryable = status === 429 || status >= 500;
+    return error;
+  }
+
+  private isHttpError(error: unknown): error is Error & { status: number; retryable: boolean } {
+    return typeof error === "object" && error !== null && "status" in error && "retryable" in error;
+  }
+
+  private isWavAudio(audioData: ArrayBuffer): boolean {
+    if (audioData.byteLength < 12) {
+      return false;
+    }
+    const bytes = new Uint8Array(audioData);
+    const riff = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+    const wave = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    return riff === "RIFF" && wave === "WAVE";
+  }
   
   // voicboxを利用
-  async voiceboxTalk(
+  async voiceboxTalkWithResult(
     text: string,
     options: TalkOptions = {}
-  ): Promise<ArrayBuffer | undefined> {
+  ): Promise<TalkSynthesisResult> {
+    let localError: string | undefined;
+    const setLocalError = (message: string) => {
+      if (!localError) {
+        localError = message;
+      }
+    };
+
+    const parsedScore = parseSimpleSingScore(text);
+    if (parsedScore) {
+      const result = await synthesizeSingVoice({
+        host: this.host,
+        port: this.port,
+        // 歌唱は通常の話者設定と切り離して固定IDを使う
+        requestedSpeaker: this.singSpeaker,
+        score: parsedScore,
+        request: (url, requestOptions) => this.request(url, requestOptions, setLocalError)
+      });
+      if (result.error) {
+        setLocalError(result.error);
+      }
+      if (result.audioData && !this.isWavAudio(result.audioData)) {
+        setLocalError("歌唱音声データが不正な形式です（WAVではありません）。");
+        return { error: localError };
+      }
+      return {
+        audioData: result.audioData,
+        error: localError ?? result.error
+      };
+    }
+    if (isLikelyAbcSingText(text)) {
+      setLocalError("ABC歌唱の解析に失敗しました。記法を確認してください。");
+      return { error: localError };
+    }
+
     // デフォルト値を設定
     const finalOptions: Required<TalkOptions> = {
       speaker: options.speaker ?? this.speaker,
@@ -106,14 +298,22 @@ export default class Talk {
     const query_url = new URL(`http://${this.host}:${this.port}/audio_query`);
     query_url.search = new URLSearchParams(query).toString();
   
-    const query_response = await this.request(query_url, {method: 'POST'});
+    const query_response = await this.request(query_url, {method: 'POST'}, setLocalError);
     
     if (!query_response) {
       console.error('[Talk] Failed to get audio query response');
-      return;
+      setLocalError('音声クエリの生成に失敗しました。');
+      return { error: localError };
     }
   
-    const query_json = await query_response.json();
+    const query_json = await this.readJsonSafely<Record<string, unknown>>(
+      query_response,
+      "audio_query",
+      setLocalError
+    );
+    if (!query_json) {
+      return { error: localError };
+    }
 
     // クエリのパラメータを設定
     query_json.speaker = finalOptions.speaker;
@@ -133,24 +333,39 @@ export default class Talk {
       'Content-Type': 'application/json'
     };
     
-    const synthesis_response = await this.request(synthesis_url, {
+    const synthesisRequest: RequestInit = {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(query_json)
-    });
-  
-    if (!synthesis_response) {
-      console.error('[Talk] Failed to get synthesis response');
-      return;
-    }
-  
+    };
+
     // ArrayBufferとして音声データを取得
-    const audioData = await synthesis_response.arrayBuffer();
+    const audioData = await this.synthesizeAndReadWithRetry(
+      synthesis_url,
+      synthesisRequest,
+      "synthesis",
+      setLocalError
+    );
+    if (!audioData) {
+      return { error: localError };
+    }
+    if (!this.isWavAudio(audioData)) {
+      setLocalError("音声データが不正な形式です（WAVではありません）。");
+      return { error: localError };
+    }
     
     // AudioContextを使用して音声を再生
     // await this.playAudio(audioData);
 
-    return audioData;
+    return { audioData, error: localError };
+  }
+
+  async voiceboxTalk(
+    text: string,
+    options: TalkOptions = {}
+  ): Promise<ArrayBuffer | undefined> {
+    const result = await this.voiceboxTalkWithResult(text, options);
+    return result.audioData;
   }
 
   private async playAudio(audioData: ArrayBuffer): Promise<void> {
